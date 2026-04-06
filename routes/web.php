@@ -10,6 +10,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Directeur\DashboardController as DirecteurDashboard;
 use App\Http\Controllers\Formateur\DashboardController as FormateurDashboard;
 use App\Http\Controllers\Etudiant\DashboardController as EtudiantDashboard;
+use App\Http\Controllers\Formateur\PlanningController;
+use App\Http\Controllers\Formateur\CoursController;
+use App\Http\Controllers\Formateur\NotesController;
+use App\Http\Controllers\Formateur\AbsenceController;
 
 // Redirection racine vers login
 Route::get('/', function () {
@@ -76,10 +80,19 @@ Route::prefix('directeur')->name('directeur.')->middleware(['auth', 'role:direct
 
 // Routes pour Formateur
 Route::prefix('formateur')->name('formateur.')->middleware(['auth', 'role:formateur'])->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\Formateur\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/planning', [PlanningController::class, 'index'])->name('planning.index');
+    Route::get('/cours', [CoursController::class, 'index'])->name('cours.index');
+    Route::post('/cours', [CoursController::class, 'store'])->name('cours.store');
+    Route::delete('/cours/{id}', [CoursController::class, 'destroy'])->name('cours.destroy');
+    Route::get('/notes', [NotesController::class, 'index'])->name('notes.index');
+Route::post('/notes/save', [NotesController::class, 'save'])->name('notes.save');
+Route::post('/notes/validate', [NotesController::class, 'validateNotes'])->name('notes.validate');
+Route::get('/absences', [AbsenceController::class, 'index'])->name('absences.index');
+Route::get('/absences/{seanceId}', [AbsenceController::class, 'show'])->name('absences.show');
+Route::post('/absences/{seanceId}', [AbsenceController::class, 'store'])->name('absences.store');
 });
 
 // Routes pour Etudiant
 Route::prefix('etudiant')->name('etudiant.')->middleware(['auth', 'role:etudiant'])->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\Etudiant\DashboardController::class, 'index'])->name('dashboard');
+    
 });

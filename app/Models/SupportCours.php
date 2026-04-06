@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class SupportCours extends Model
 {
-    protected $fillable = ['titre', 'taille', 'date_upload', 'module_id', 'formateur_id'];
-
+    protected $fillable = ['titre', 'taille', 'date_upload', 'module_id', 'formateur_id', 'fichier'];
+    protected $casts = [
+    'date_upload' => 'datetime',
+];
     public function module()
     {
         return $this->belongsTo(Module::class);

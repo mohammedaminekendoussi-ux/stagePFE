@@ -82,7 +82,23 @@
                 <canvas id="filiereChart" height="200"></canvas>
             </div>
         </div>
-
+<!-- Alertes absences critiques -->
+@if(count($alertesAbsences) > 0)
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <i class="bi bi-exclamation-triangle"></i> Alertes absences critiques (>20%)
+    </div>
+    <div class="card-body">
+        <ul class="list-group">
+            @foreach($alertesAbsences as $alerte)
+                <li class="list-group-item">
+                    <strong>{{ $alerte['etudiant']->prenom }} {{ $alerte['etudiant']->nom }}</strong> - Module {{ $alerte['module'] }} : taux d'absence {{ $alerte['taux'] }}%
+                </li>
+            @endforeach
+        </ul>
+    </div>
+</div>
+@endif
         <!-- Sauvegardage BDD -->
         <div class="row mt-4">
     <div class="col-12">

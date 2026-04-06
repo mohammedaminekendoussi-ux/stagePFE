@@ -44,7 +44,18 @@ class DashboardController extends Controller
             ->groupBy('filieres.nom')
             ->get();
 
+// ... autres stats
+    $alertesAbsences = [];
+    $etudiants = User::where('role', 'etudiant')->get();
+    foreach ($etudiants as $etudiant) {
+        $alertes = $etudiant->getTauxAbsenceParModule();
+        if (!empty($alertes)) {
+            $alertesAbsences = array_merge($alertesAbsences, $alertes);
+        }
+    }
+
         return view('admin.dashboard', compact(
+            'alertesAbsences',
             'totalEtudiants',
             'totalFormateurs',
             'totalModules',
