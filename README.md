@@ -54,56 +54,6 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-
-Sructure de projet
-app/
-├── Http/
-│   ├── Controllers/
-│   │   ├── Admin/
-│   │   │   ├── DashboardController.php
-│   │   │   ├── UserController.php
-│   │   │   ├── FiliereController.php
-│   │   │   ├── GroupeController.php
-│   │   │   ├── ModuleController.php
-│   │   │   ├── SeanceController.php
-│   │   │   └── BackupController.php
-│   │   ├── Directeur/
-│   │   │   ├── DashboardController.php
-│   │   │   └── RapportController.php
-│   │   ├── Formateur/
-│   │   │   ├── CoursController.php
-│   │   │   ├── NoteController.php
-│   │   │   └── PresenceController.php
-│   │   ├── Etudiant/
-│   │   │   ├── DashboardController.php
-│   │   │   └── ConsultationController.php
-│   │   └── Auth/
-│   │       └── LoginController.php
-│   ├── Middleware/
-│   │   ├── AdminMiddleware.php
-│   │   ├── DirecteurMiddleware.php
-│   │   ├── FormateurMiddleware.php
-│   │   └── EtudiantMiddleware.php
-│   └── Kernel.php (pour enregistrer les middleware)
-├── Models/
-│   ├── User.php
-│   ├── Filiere.php
-│   ├── Groupe.php
-│   ├── Module.php
-│   ├── Seance.php
-│   ├── SupportCours.php
-│   ├── Note.php
-│   └── Absence.php
-├── Providers/
-│   └── RouteServiceProvider.php (pour les redirections après login)
-database/
-├── migrations/
-│   ├── ... (les fichiers générés)
-├── seeders/
-│   └── DatabaseSeeder.php
-routes/
-├── web.php
-└── api.php (si besoin)
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
