@@ -2,48 +2,52 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'nom', 'prenom', 'email', 'mot_de_passe',
+        'role', 'actif', 'bloque_time', 'tentative_echec', 'groupe_id'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
+    protected $hidden = ['mot_de_passe', 'remember_token'];
+
+    protected $casts = [
+        'actif' => 'boolean',
+        'bloque_time' => 'datetime',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function groupe()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->belongsTo(Groupe::class);
+    }
+
+    public function absences()
+    {
+        return $this->hasMany(Absence::class, 'etudiant_id');
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(Note::class, 'etudiant_id');
+    }
+
+    public function modulesEnseigne()
+    {
+        return $this->hasMany(Module::class, 'formateur_id');
+    }
+
+    public function seancesEnseigne()
+    {
+        return $this->hasMany(Seance::class, 'formateur_id');
+    }
+
+    public function supportCours()
+    {
+        return $this->hasMany(SupportCours::class, 'formateur_id');
     }
 }
