@@ -38,14 +38,14 @@
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Groupe</label>
                     <select name="groupe_id" id="groupe_id" class="form-select" required>
-                        <option value="">-- Choisir un groupe --</option>
-                        @foreach($groupes as $groupe)
-                            <option value="{{ $groupe->id }}"
-                                {{ request('groupe_id') == $groupe->id ? 'selected' : '' }}>
-                                {{ $groupe->nom }}
-                            </option>
-                        @endforeach
-                    </select>
+    <option value="">-- Choisir un groupe --</option>
+    @foreach($groupes as $g)
+        <option value="{{ $g->id }}"
+            {{ request('groupe_id') == $g->id ? 'selected' : '' }}>
+            {{ $g->nom }}
+        </option>
+    @endforeach
+</select>
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">
@@ -142,9 +142,13 @@
                                                             </select>
                                                         </div>
                                                         <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Salle</label>
-                                                            <input type="text" name="salle" class="form-control"
-                                                                   value="{{ $seance->salle }}" required>
+                                                            <label class="form-label fw-semibold">Salle <span class="text-danger">*</span></label>
+<select name="salle" class="form-select salle-edit-select"
+        data-jour="{{ $seance->jour }}"
+        data-creneau="{{ $creneau }}"
+        data-exclude="{{ $seance->id }}" required>
+    <option value="{{ $seance->salle }}" selected>{{ $seance->salle }}</option>
+</select>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">
@@ -159,9 +163,7 @@
                                                             </button>
                                                         </form>
                                                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                        <button type="submit" class="btn btn-primary">
-                                                            <i class="bi bi-check-circle"></i> Enregistrer
-                                                        </button>
+                                                        
                                                     </div>
                                                 </form>
                                             </div>
@@ -215,8 +217,11 @@
                                                         </div>
                                                         <div class="mb-3">
                                                             <label class="form-label fw-semibold">Salle <span class="text-danger">*</span></label>
-                                                            <input type="text" name="salle" class="form-control"
-                                                                   placeholder="Ex: Salle A1" required>
+<select name="salle" class="form-select salle-add-select"
+        data-jour="{{ $jour }}"
+        data-creneau="{{ $creneau }}" required>
+    <option value="">-- Choisir d'abord un module --</option>
+</select>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">
@@ -245,45 +250,84 @@
 
 @section('scripts')
 <script>
-    // Charger groupes quand filière change
-    document.getElementById('filiere_id').addEventListener('change', function() {
-        const filiereId = this.value;
-        const groupeSelect = document.getElementById('groupe_id');
-        groupeSelect.innerHTML = '<option value="">-- Choisir un groupe --</option>';
+// Charger groupes quand filière change
+document.getElementById('filiere_id').addEventListener('change', function() {
+    const filiereId = this.value;
+    if (filiereId) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('filiere_id', filiereId);
+        url.searchParams.delete('groupe_id');
+        window.location.href = url.toString();
+    }
+});
 
-        if (filiereId) {
-            fetch(`/stagePFE/public/admin/emploi?filiere_id=${filiereId}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+// Fonction charger salles disponibles
+function chargerSalles(selectSalle, jour, creneau, excludeId = null, salleActuelle = null) {
+    let url = `/stagePFE/public/admin/emploi/salles?jour=${jour}&creneau=${creneau}`;
+    if (excludeId) url += `&exclude_id=${excludeId}`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(salles => {
+            selectSalle.innerHTML = '<option value="">-- Choisir une salle --</option>';
+            salles.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.nom;
+                option.textContent = s.disponible ? s.nom : s.nom + ' (occupée)';
+                option.disabled = !s.disponible;
+                if (s.nom === salleActuelle) {
+                    option.selected = true;
+                    option.disabled = false;
+                }
+                selectSalle.appendChild(option);
             });
+        });
+}
 
-            // Soumettre le form pour recharger les groupes
-            document.getElementById('formSelection').submit();
+// Charger formateurs + salles quand module change (modal ajouter)
+document.querySelectorAll('.module-add-select').forEach(function(select) {
+    select.addEventListener('change', function() {
+        const moduleId = this.value;
+        const jour = this.dataset.jour;
+        const creneau = this.dataset.creneau;
+        const key = jour + creneau.replace(/[:\-]/g, '');
+        const formateurSelect = document.querySelector('.formateur-add-' + key);
+        const salleSelect = document.querySelector(`.salle-add-select[data-jour="${jour}"][data-creneau="${creneau}"]`);
+
+        if (!moduleId) {
+            formateurSelect.innerHTML = '<option value="">-- Choisir d\'abord un module --</option>';
+            salleSelect.innerHTML = '<option value="">-- Choisir d\'abord un module --</option>';
+            return;
         }
-    });
 
-    // Charger formateurs quand module change (modal ajouter)
-    document.querySelectorAll('.module-add-select').forEach(function(select) {
-        select.addEventListener('change', function() {
-            const moduleId = this.value;
-            const jour = this.dataset.jour;
-            const creneau = this.dataset.creneau;
-            const key = jour + creneau.replace(/[:\-]/g, '');
-            const formateurSelect = document.querySelector('.formateur-add-' + key);
-
-            if (!moduleId) {
-                formateurSelect.innerHTML = '<option value="">-- Choisir d\'abord un module --</option>';
-                return;
-            }
-
-            fetch(`{{ route('admin.emploi.formateurs', '') }}/${moduleId}`)
-                .then(r => r.json())
-                .then(formateurs => {
-                    formateurSelect.innerHTML = '<option value="">-- Choisir un formateur --</option>';
-                    formateurs.forEach(f => {
-                        formateurSelect.innerHTML += `<option value="${f.id}">${f.prenom} ${f.nom}</option>`;
-                    });
-                });
+        // Charger formateurs
+        fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}`)
+    .then(r => r.json())
+    .then(formateurs => {
+        formateurSelect.innerHTML = '<option value="">-- Choisir un formateur --</option>';
+        formateurs.forEach(f => {
+            const option = document.createElement('option');
+            option.value = f.id;
+            option.textContent = f.disponible
+                ? `${f.prenom} ${f.nom}`
+                : `${f.prenom} ${f.nom} (occupé)`;
+            option.disabled = !f.disponible;
+            formateurSelect.appendChild(option);
         });
     });
+
+        // Charger salles disponibles
+        chargerSalles(salleSelect, jour, creneau);
+    });
+});
+
+// Charger salles quand modal modifier s'ouvre
+document.querySelectorAll('.salle-edit-select').forEach(function(select) {
+    const jour = select.dataset.jour;
+    const creneau = select.dataset.creneau;
+    const excludeId = select.dataset.exclude;
+    const salleActuelle = select.querySelector('option[selected]')?.value;
+    chargerSalles(select, jour, creneau, excludeId, salleActuelle);
+});
 </script>
 @endsection

@@ -50,4 +50,6 @@ Route::post('/emploi', [EmploiDuTempsController::class, 'store'])->name('emploi.
 Route::put('/emploi/{id}', [EmploiDuTempsController::class, 'update'])->name('emploi.update');
 Route::delete('/emploi/{id}', [EmploiDuTempsController::class, 'destroy'])->name('emploi.destroy');
 Route::get('/emploi/formateurs/{moduleId}', [EmploiDuTempsController::class, 'getFormateurs'])->name('emploi.formateurs');
+
+Route::get('/emploi/salles', [EmploiDuTempsController::class, 'getSallesDisponibles'])->name('emploi.salles');
 });

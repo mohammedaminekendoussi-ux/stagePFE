@@ -21,7 +21,12 @@ class EmploiDuTempsController extends Controller
     ];
 
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-
+    const SALLES = [
+    'Salle A1', 'Salle A2', 'Salle A3',
+    'Salle B1', 'Salle B2', 'Salle B3',
+    'Salle C1', 'Salle C2', 'Labo Info 1',
+    'Labo Info 2', 'Amphi 1', 'Amphi 2',
+];
     public function index(Request $request)
     {
         $filieres = Filiere::all();
@@ -59,15 +64,36 @@ class EmploiDuTempsController extends Controller
     }
 
     // Récupérer les formateurs d'un module (pour AJAX)
-    public function getFormateurs($moduleId)
-    {
-        $module = Module::findOrFail($moduleId);
-        $formateurs = User::where('id', $module->formateur_id)
-            ->where('actif', true)
-            ->get(['id', 'nom', 'prenom']);
+    public function getFormateurs(Request $request, $moduleId)
+{
+    $module = Module::findOrFail($moduleId);
+    $jour   = $request->jour;
+    $creneau = $request->creneau;
 
-        return response()->json($formateurs);
-    }
+    [$debut, $fin] = explode('-', $creneau);
+
+    // Formateurs occupés à ce créneau
+    $formateursOccupes = Seance::where('jour', $jour)
+        ->where('h_debut', $debut . ':00')
+        ->where('h_fin', $fin . ':00')
+        ->when($request->exclude_id, fn($q) => $q->where('id', '!=', $request->exclude_id))
+        ->pluck('formateur_id')
+        ->toArray();
+
+    $formateurs = User::where('id', $module->formateur_id)
+        ->where('actif', true)
+        ->get(['id', 'nom', 'prenom'])
+        ->map(function($f) use ($formateursOccupes) {
+            return [
+                'id'         => $f->id,
+                'nom'        => $f->nom,
+                'prenom'     => $f->prenom,
+                'disponible' => !in_array($f->id, $formateursOccupes),
+            ];
+        });
+
+    return response()->json($formateurs);
+}
 
     // Vérifier les conflits
     private function verifierConflits($jour, $debut, $fin, $formateurId, $salle, $groupeId, $excludeId = null)
@@ -197,4 +223,30 @@ class EmploiDuTempsController extends Controller
             'filiere_id' => $filiereId,
         ])->with('success', 'Séance supprimée avec succès !');
     }
+
+    // Récupérer les salles disponibles pour un créneau (AJAX)
+public function getSallesDisponibles(Request $request)
+{
+    $jour    = $request->jour;
+    $creneau = $request->creneau;
+    $excludeId = $request->exclude_id;
+
+    [$debut, $fin] = explode('-', $creneau);
+
+    $sallesOccupees = Seance::where('jour', $jour)
+        ->where('h_debut', $debut . ':00')
+        ->where('h_fin', $fin . ':00')
+        ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+        ->pluck('salle')
+        ->toArray();
+
+    $salles = collect(self::SALLES)->map(function($salle) use ($sallesOccupees) {
+        return [
+            'nom'        => $salle,
+            'disponible' => !in_array($salle, $sallesOccupees),
+        ];
+    });
+
+    return response()->json($salles);
+}
 }
