@@ -26,7 +26,7 @@ class EmploiDuTempsController extends Controller
     'Salle B1', 'Salle B2', 'Salle B3',
     'Salle C1', 'Salle C2', 'Labo Info 1',
     'Labo Info 2', 'Amphi 1', 'Amphi 2',
-];
+    ];
     public function index(Request $request)
     {
         $filieres = Filiere::all();
