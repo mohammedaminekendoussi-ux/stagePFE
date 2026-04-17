@@ -300,24 +300,61 @@ document.querySelectorAll('.module-add-select').forEach(function(select) {
             return;
         }
 
-        // Charger formateurs
+        // Charger TOUS les formateurs disponibles (en passant jour+creneau)
         fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}`)
-    .then(r => r.json())
-    .then(formateurs => {
-        formateurSelect.innerHTML = '<option value="">-- Choisir un formateur --</option>';
-        formateurs.forEach(f => {
-            const option = document.createElement('option');
-            option.value = f.id;
-            option.textContent = f.disponible
-                ? `${f.prenom} ${f.nom}`
-                : `${f.prenom} ${f.nom} (occupé)`;
-            option.disabled = !f.disponible;
-            formateurSelect.appendChild(option);
-        });
-    });
+            .then(r => r.json())
+            .then(formateurs => {
+                formateurSelect.innerHTML = '<option value="">-- Choisir un formateur --</option>';
+                formateurs.forEach(f => {
+                    const option = document.createElement('option');
+                    option.value = f.id;
+                    option.textContent = f.disponible
+                        ? `${f.prenom} ${f.nom}`
+                        : `${f.prenom} ${f.nom} (occupé)`;
+                    option.disabled = !f.disponible;
+                    formateurSelect.appendChild(option);
+                });
+            });
 
-        // Charger salles disponibles
+        // Charger les salles disponibles (ne change pas)
         chargerSalles(salleSelect, jour, creneau);
+    });
+});
+
+// Charger les formateurs dans les modals d'édition quand ils s'ouvrent
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('show.bs.modal', function(event) {
+        // On cherche le select des formateurs dans ce modal
+        const formateurSelect = modal.querySelector('select[name="formateur_id"]');
+        const salleSelect = modal.querySelector('select[name="salle"]');
+        if (!formateurSelect) return;
+
+        // Récupérer les infos du jour/creneau depuis les data-attributes du select de salle (ou autre)
+        const jour = modal.querySelector('.salle-edit-select')?.dataset.jour;
+        const creneau = modal.querySelector('.salle-edit-select')?.dataset.creneau;
+        const excludeId = modal.querySelector('.salle-edit-select')?.dataset.exclude;
+        const currentFormateurId = formateurSelect.value; // valeur actuelle
+
+        if (jour && creneau) {
+            fetch(`/stagePFE/public/admin/emploi/formateurs/0?jour=${jour}&creneau=${creneau}&exclude_id=${excludeId}`)
+                .then(r => r.json())
+                .then(formateurs => {
+                    formateurSelect.innerHTML = '';
+                    formateurs.forEach(f => {
+                        const option = document.createElement('option');
+                        option.value = f.id;
+                        option.textContent = f.disponible
+                            ? `${f.prenom} ${f.nom}`
+                            : `${f.prenom} ${f.nom} (occupé)`;
+                        option.disabled = !f.disponible;
+                        if (f.id == currentFormateurId) {
+                            option.selected = true;
+                            option.disabled = false; // on force la sélection même si occupé
+                        }
+                        formateurSelect.appendChild(option);
+                    });
+                });
+        }
     });
 });
 
