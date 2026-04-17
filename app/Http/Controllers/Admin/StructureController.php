@@ -74,10 +74,15 @@ class StructureController extends Controller
     public function storeGroupe(Request $request)
     {
         $request->validate([
-            'nom'        => 'required|string|max:255',
-            'annee'      => 'required|integer|min:1|max:5',
-            'filiere_id' => 'required|exists:filieres,id',
-        ]);
+    'nom'        => [
+        'required', 'string', 'max:255',
+        \Illuminate\Validation\Rule::unique('groupes')->where(function($query) use ($request) {
+            return $query->where('filiere_id', $request->filiere_id);
+        }),
+    ],
+    'annee'      => 'required|integer|min:1|max:5',
+    'filiere_id' => 'required|exists:filieres,id',
+]);
 
         Groupe::create($request->only('nom', 'annee', 'filiere_id'));
 
@@ -90,10 +95,15 @@ class StructureController extends Controller
         $groupe = Groupe::findOrFail($id);
 
         $request->validate([
-            'nom'        => 'required|string|max:255',
-            'annee'      => 'required|integer|min:1|max:5',
-            'filiere_id' => 'required|exists:filieres,id',
-        ]);
+    'nom'        => [
+        'required', 'string', 'max:255',
+        \Illuminate\Validation\Rule::unique('groupes')->where(function($query) use ($request) {
+            return $query->where('filiere_id', $request->filiere_id);
+        })->ignore($id),
+    ],
+    'annee'      => 'required|integer|min:1|max:5',
+    'filiere_id' => 'required|exists:filieres,id',
+]);
 
         $groupe->update($request->only('nom', 'annee', 'filiere_id'));
 
