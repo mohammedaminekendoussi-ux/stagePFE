@@ -64,5 +64,32 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Récupérer le timestamp de fin de blocage depuis la session
+    let blockedUntil = {{ session('blocked_until') ?? 0 }};
+
+    function updateCountdown() {
+        let now = Math.floor(Date.now() / 1000);
+        let secondsLeft = blockedUntil - now;
+        let errorDiv = document.querySelector('.alert-danger');
+        let submitButton = document.querySelector('button[type="submit"]');
+
+        if (secondsLeft > 0 && errorDiv && errorDiv.innerText.includes('Trop de tentatives')) {
+            errorDiv.innerHTML = `Trop de tentatives. Réessayez dans ${secondsLeft} seconde${secondsLeft > 1 ? 's' : ''}.`;
+            if (submitButton) submitButton.disabled = true;
+            setTimeout(updateCountdown, 1000);
+        } else if (secondsLeft <= 0 && submitButton) {
+            submitButton.disabled = false;
+            if (errorDiv && errorDiv.innerText.includes('Trop de tentatives')) {
+                // Recharger la page pour effacer l'erreur
+                location.reload();
+            }
+        }
+    }
+
+    if (blockedUntil > 0) {
+        updateCountdown();
+    }
+</script>
 </body>
 </html>

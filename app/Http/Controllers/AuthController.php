@@ -29,17 +29,17 @@ class AuthController extends Controller
 
         // Vérifier si l'IP est bloquée
         if (Cache::has($tentativesKey) && Cache::get($tentativesKey) >= 5) {
-            $blockedUntil = Cache::get($tentativesKey . '_blocked');
-            if ($blockedUntil && now()->lt($blockedUntil)) {
-                return back()->withErrors([
-                    'email' => 'Trop de tentatives. Réessayez dans une minute.',
-                ])->onlyInput('email');
-            } else {
-                // Réinitialiser après blocage
-                Cache::forget($tentativesKey);
-                Cache::forget($tentativesKey . '_blocked');
-            }
-        }
+    $blockedUntil = Cache::get($tentativesKey . '_blocked');
+    if ($blockedUntil && now()->lt($blockedUntil)) {
+        $secondsLeft = now()->diffInSeconds($blockedUntil);
+        return back()->withErrors([
+            'email' => 'Trop de tentatives. Réessayez dans ' . ceil($secondsLeft) . ' secondes.',
+        ])->with('blocked_until', $blockedUntil->timestamp)->onlyInput('email');
+    } else {
+        Cache::forget($tentativesKey);
+        Cache::forget($tentativesKey . '_blocked');
+    }
+}
 
         // Chercher l'utilisateur par email
         $user = User::where('email', $request->email)->first();

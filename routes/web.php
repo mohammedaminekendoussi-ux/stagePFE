@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\StructureController;
 use App\Http\Controllers\Admin\EmploiDuTempsController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Directeur\DashboardController as DirecteurDashboard;
+use App\Http\Controllers\Formateur\DashboardController as FormateurDashboard;
+use App\Http\Controllers\Etudiant\DashboardController as EtudiantDashboard;
 
 // Redirection racine vers login
 Route::get('/', function () {
@@ -60,4 +63,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:administrateur
 
     // Sauvegarde
     Route::get('/backup', [BackupController::class, 'download'])->name('backup.download');
+});
+// Routes pour Directeur
+Route::prefix('directeur')->name('directeur.')->middleware(['auth', 'role:directeur'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Directeur\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/rapports', [App\Http\Controllers\Directeur\RapportController::class, 'index'])->name('rapports');
+    Route::get('/rapports/export-pdf', [App\Http\Controllers\Directeur\RapportController::class, 'exportPdf'])->name('rapports.export');
+});
+
+// Routes pour Formateur
+Route::prefix('formateur')->name('formateur.')->middleware(['auth', 'role:formateur'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Formateur\DashboardController::class, 'index'])->name('dashboard');
+});
+
+// Routes pour Etudiant
+Route::prefix('etudiant')->name('etudiant.')->middleware(['auth', 'role:etudiant'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Etudiant\DashboardController::class, 'index'])->name('dashboard');
 });
