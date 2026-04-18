@@ -114,15 +114,12 @@
         <a href="{{ route('directeur.rapports') }}" class="nav-link">
     <i class="bi bi-bar-chart"></i> Rapports
 </a>
-        <a href="#" class="nav-link">
-            <i class="bi bi-people"></i> Étudiants (consultation)
-        </a>
-        <a href="#" class="nav-link">
-            <i class="bi bi-person-badge"></i> Formateurs
-        </a>
-        <a href="#" class="nav-link">
-            <i class="bi bi-calendar3"></i> Emplois du temps
-        </a>
+        <a href="{{ route('directeur.emploi.index') }}" class="nav-link">
+    <i class="bi bi-calendar3"></i> Emplois du temps
+</a>
+        <a href="{{ route('directeur.dossiers.index') }}" class="nav-link">
+    <i class="bi bi-folder2"></i> Dossiers
+</a>
         <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
         <form method="POST" action="{{ route('logout') }}">
             @csrf

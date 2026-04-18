@@ -69,6 +69,9 @@ Route::prefix('directeur')->name('directeur.')->middleware(['auth', 'role:direct
     Route::get('/dashboard', [App\Http\Controllers\Directeur\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/rapports', [App\Http\Controllers\Directeur\RapportController::class, 'index'])->name('rapports');
     Route::get('/rapports/export-pdf', [App\Http\Controllers\Directeur\RapportController::class, 'exportPdf'])->name('rapports.export');
+
+    Route::get('/emploi-du-temps', [App\Http\Controllers\Directeur\EmploiDuTempsController::class, 'index'])->name('emploi.index');
+    Route::get('/dossiers', [App\Http\Controllers\Directeur\DossierController::class, 'index'])->name('dossiers.index');
 });
 
 // Routes pour Formateur
