@@ -123,19 +123,16 @@
                 class="nav-link {{ request()->routeIs('admin.emploi.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar3"></i> Emploi du temps
             </a>
-            <a href="#" class="nav-link">
-                <i class="bi bi-clipboard-x"></i> Absences
-            </a>
-            
+                      
 
             <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
 
-            <form method="POST" action="#">
-                @csrf
-                <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
-                    <i class="bi bi-box-arrow-left"></i> Déconnexion
-                </button>
-            </form>
+            <form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
+        <i class="bi bi-box-arrow-left"></i> Déconnexion
+    </button>
+</form>
         </nav>
     </div>
 

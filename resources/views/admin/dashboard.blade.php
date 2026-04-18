@@ -83,6 +83,25 @@
             </div>
         </div>
 
+        <!-- Sauvegardage BDD -->
+        <div class="row mt-4">
+    <div class="col-12">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold"><i class="bi bi-database"></i> Sauvegarde</h6>
+                    <p class="text-muted mb-0">Générer un fichier .sql de toute la base de données</p>
+                </div>
+                <a href="{{ route('admin.backup.download') }}" 
+                   class="btn btn-warning"
+                   onclick="return confirm('Voulez-vous vraiment sauvegarder la base de données ?')">
+                    <i class="bi bi-download"></i> Sauvegarder
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
     </div>
 
 @endsection
