@@ -50,4 +50,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(SupportCours::class, 'formateur_id');
     }
+    public function getAuthPassword()
+    {
+        return $this->mot_de_passe;
+    }
 }

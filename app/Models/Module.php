@@ -32,4 +32,8 @@ class Module extends Model
     {
         return $this->hasMany(SupportCours::class);
     }
+    public function absences()
+{
+    return $this->hasManyThrough(Absence::class, Seance::class, 'module_id', 'seance_id');
+}
 }

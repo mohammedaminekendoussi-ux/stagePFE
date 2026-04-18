@@ -5,13 +5,24 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\StructureController;
 use App\Http\Controllers\Admin\EmploiDuTempsController;
+use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Directeur\DashboardController as DirecteurDashboard;
+use App\Http\Controllers\Formateur\DashboardController as FormateurDashboard;
+use App\Http\Controllers\Etudiant\DashboardController as EtudiantDashboard;
 
+// Redirection racine vers login
 Route::get('/', function () {
-    return redirect()->route('admin.dashboard');
+    return redirect()->route('login');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
+// Routes publiques (authentification)
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Routes protégées pour l'administrateur (un seul groupe)
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:administrateur'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -24,8 +35,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::patch('/users/{id}/toggle', [UserController::class, 'toggleActif'])->name('users.toggle');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Gestion structure académique
-    // Filières
+    // Gestion structure académique - Filières
     Route::get('/structure/filieres', [StructureController::class, 'filieres'])->name('structure.filieres');
     Route::post('/structure/filieres', [StructureController::class, 'storeFiliere'])->name('structure.filieres.store');
     Route::put('/structure/filieres/{id}', [StructureController::class, 'updateFiliere'])->name('structure.filieres.update');
@@ -43,13 +53,33 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::put('/structure/modules/{id}', [StructureController::class, 'updateModule'])->name('structure.modules.update');
     Route::delete('/structure/modules/{id}', [StructureController::class, 'destroyModule'])->name('structure.modules.destroy');
 
-
     // Emploi du temps
-Route::get('/emploi', [EmploiDuTempsController::class, 'index'])->name('emploi.index');
-Route::post('/emploi', [EmploiDuTempsController::class, 'store'])->name('emploi.store');
-Route::put('/emploi/{id}', [EmploiDuTempsController::class, 'update'])->name('emploi.update');
-Route::delete('/emploi/{id}', [EmploiDuTempsController::class, 'destroy'])->name('emploi.destroy');
-Route::get('/emploi/formateurs/{moduleId}', [EmploiDuTempsController::class, 'getFormateurs'])->name('emploi.formateurs');
+    Route::get('/emploi', [EmploiDuTempsController::class, 'index'])->name('emploi.index');
+    Route::post('/emploi', [EmploiDuTempsController::class, 'store'])->name('emploi.store');
+    Route::put('/emploi/{id}', [EmploiDuTempsController::class, 'update'])->name('emploi.update');
+    Route::delete('/emploi/{id}', [EmploiDuTempsController::class, 'destroy'])->name('emploi.destroy');
+    Route::get('/emploi/formateurs/{moduleId}', [EmploiDuTempsController::class, 'getFormateurs'])->name('emploi.formateurs');
+    Route::get('/emploi/salles', [EmploiDuTempsController::class, 'getSallesDisponibles'])->name('emploi.salles');
 
-Route::get('/emploi/salles', [EmploiDuTempsController::class, 'getSallesDisponibles'])->name('emploi.salles');
+    // Sauvegarde
+    Route::get('/backup', [BackupController::class, 'download'])->name('backup.download');
+});
+// Routes pour Directeur
+Route::prefix('directeur')->name('directeur.')->middleware(['auth', 'role:directeur'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Directeur\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/rapports', [App\Http\Controllers\Directeur\RapportController::class, 'index'])->name('rapports');
+    Route::get('/rapports/export-pdf', [App\Http\Controllers\Directeur\RapportController::class, 'exportPdf'])->name('rapports.export');
+
+    Route::get('/emploi-du-temps', [App\Http\Controllers\Directeur\EmploiDuTempsController::class, 'index'])->name('emploi.index');
+    Route::get('/dossiers', [App\Http\Controllers\Directeur\DossierController::class, 'index'])->name('dossiers.index');
+});
+
+// Routes pour Formateur
+Route::prefix('formateur')->name('formateur.')->middleware(['auth', 'role:formateur'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Formateur\DashboardController::class, 'index'])->name('dashboard');
+});
+
+// Routes pour Etudiant
+Route::prefix('etudiant')->name('etudiant.')->middleware(['auth', 'role:etudiant'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Etudiant\DashboardController::class, 'index'])->name('dashboard');
 });

@@ -102,40 +102,33 @@
 <body>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <i class="bi bi-mortarboard-fill"></i> StagePFE
-        </div>
-        <nav class="nav flex-column mt-2">
-            <a href="{{ route('admin.dashboard') }}"
-               class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i> Tableau de bord
-            </a>
-            <a href="{{ route('admin.users.index') }}"
-                class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <i class="bi bi-people"></i> Utilisateurs
-            </a>
-            <a href="{{ route('admin.structure.filieres') }}"
-                class="nav-link {{ request()->routeIs('admin.structure.*') ? 'active' : '' }}">
-                <i class="bi bi-diagram-3"></i> Structure Académique
-            </a>
-            <a href="{{ route('admin.emploi.index') }}"
-                class="nav-link {{ request()->routeIs('admin.emploi.*') ? 'active' : '' }}">
-                <i class="bi bi-calendar3"></i> Emploi du temps
-            </a>
-                      
-
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
-
-            <form method="POST" action="{{ route('logout') }}">
-    @csrf
-    <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
-        <i class="bi bi-box-arrow-left"></i> Déconnexion
-    </button>
-</form>
-        </nav>
+<div class="sidebar">
+    <div class="logo">
+        <i class="bi bi-mortarboard-fill"></i> StagePFE
     </div>
-
+    <nav class="nav flex-column mt-2">
+        <a href="{{ route('directeur.dashboard') }}"
+           class="nav-link {{ request()->routeIs('directeur.dashboard') ? 'active' : '' }}">
+            <i class="bi bi-speedometer2"></i> Tableau de bord
+        </a>
+        <a href="{{ route('directeur.rapports') }}" class="nav-link">
+    <i class="bi bi-bar-chart"></i> Rapports
+</a>
+        <a href="{{ route('directeur.emploi.index') }}" class="nav-link">
+    <i class="bi bi-calendar3"></i> Emplois du temps
+</a>
+        <a href="{{ route('directeur.dossiers.index') }}" class="nav-link">
+    <i class="bi bi-folder2"></i> Dossiers
+</a>
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 10px 20px;">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
+                <i class="bi bi-box-arrow-left"></i> Déconnexion
+            </button>
+        </form>
+    </nav>
+</div>
     <!-- Topbar -->
     <div class="topbar">
         <h5 class="mb-0 fw-bold">@yield('page-title', 'Tableau de bord')</h5>
@@ -150,7 +143,7 @@
                     <i class="bi bi-person-fill text-white"></i>
                 </div>
                 <span class="fw-semibold">
-                    {{ ucfirst(Auth::user()->role) }} - {{ Auth::user()->nom }}
+                    Directeur - {{ Auth::user()->nom }}
                 </span>
             </div>
         </div>

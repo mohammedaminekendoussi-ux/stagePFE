@@ -17,4 +17,8 @@ class Filiere extends Model
     {
         return $this->hasMany(Module::class);
     }
+    public function etudiants()
+    {
+        return $this->hasManyThrough(User::class, Groupe::class, 'filiere_id', 'groupe_id');
+    }
 }

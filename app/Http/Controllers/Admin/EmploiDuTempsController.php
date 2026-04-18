@@ -26,7 +26,7 @@ class EmploiDuTempsController extends Controller
     'Salle B1', 'Salle B2', 'Salle B3',
     'Salle C1', 'Salle C2', 'Labo Info 1',
     'Labo Info 2', 'Amphi 1', 'Amphi 2',
-];
+    ];
     public function index(Request $request)
     {
         $filieres = Filiere::all();
@@ -63,27 +63,29 @@ class EmploiDuTempsController extends Controller
         ));
     }
 
-    // Récupérer les formateurs d'un module (pour AJAX)
-    public function getFormateurs(Request $request, $moduleId)
+    // Récupérer les formateurs actif
+    public function getFormateurs(Request $request, $moduleId = null)
 {
-    $module = Module::findOrFail($moduleId);
-    $jour   = $request->jour;
+    $jour    = $request->jour;
     $creneau = $request->creneau;
+    $excludeId = $request->exclude_id;
 
-    [$debut, $fin] = explode('-', $creneau);
+    // Récupérer TOUS les formateurs actifs, pas seulement celui du module
+    $formateurs = User::where('role', 'formateur')
+                      ->where('actif', true)
+                      ->get(['id', 'nom', 'prenom']);
 
-    // Formateurs occupés à ce créneau
-    $formateursOccupes = Seance::where('jour', $jour)
-        ->where('h_debut', $debut . ':00')
-        ->where('h_fin', $fin . ':00')
-        ->when($request->exclude_id, fn($q) => $q->where('id', '!=', $request->exclude_id))
-        ->pluck('formateur_id')
-        ->toArray();
+    // Si on a un jour et un créneau, on vérifie la disponibilité
+    if ($jour && $creneau) {
+        [$debut, $fin] = explode('-', $creneau);
+        $formateursOccupes = Seance::where('jour', $jour)
+            ->where('h_debut', $debut . ':00')
+            ->where('h_fin', $fin . ':00')
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->pluck('formateur_id')
+            ->toArray();
 
-    $formateurs = User::where('id', $module->formateur_id)
-        ->where('actif', true)
-        ->get(['id', 'nom', 'prenom'])
-        ->map(function($f) use ($formateursOccupes) {
+        $formateurs = $formateurs->map(function($f) use ($formateursOccupes) {
             return [
                 'id'         => $f->id,
                 'nom'        => $f->nom,
@@ -91,6 +93,17 @@ class EmploiDuTempsController extends Controller
                 'disponible' => !in_array($f->id, $formateursOccupes),
             ];
         });
+    } else {
+        // Par défaut, tous disponibles
+        $formateurs = $formateurs->map(function($f) {
+            return [
+                'id'         => $f->id,
+                'nom'        => $f->nom,
+                'prenom'     => $f->prenom,
+                'disponible' => true,
+            ];
+        });
+    }
 
     return response()->json($formateurs);
 }
