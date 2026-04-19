@@ -59,6 +59,7 @@ class UserController extends Controller
             'email'              => $request->email,
             'role'               => $request->role,
             'mot_de_passe'       => Hash::make($request->mot_de_passe),
+            'password_changed_at' => null, // ← nouveau
             'groupe_id'          => $request->role === 'etudiant' ? $request->groupe_id : null,
             'actif'              => true,
             'tentative_echec'    => 0,
