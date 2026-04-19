@@ -75,118 +75,130 @@ class RapportController extends Controller
                 break;
 
             case 'presence':
-                $groupesQuery = Groupe::with('etudiants', 'seances');
-                if ($groupeId) {
-                    $groupesQuery->where('id', $groupeId);
-                } elseif ($filiereId) {
-                    $groupesQuery->where('filiere_id', $filiereId);
-                }
-                $groupesList = $groupesQuery->get();
-                $resultats = [];
-                foreach ($groupesList as $groupe) {
-                    $nbEtudiants = $groupe->etudiants->count();
-                    $seancesQuery = $groupe->seances();
-                    if ($dateDebut) $seancesQuery->whereDate('jour', '>=', $dateDebut);
-                    if ($dateFin) $seancesQuery->whereDate('jour', '<=', $dateFin);
-                    $nbSeances = $seancesQuery->count();
-                    if ($nbEtudiants > 0 && $nbSeances > 0) {
-                        $absencesQuery = Absence::whereHas('seance', fn($q) => $q->where('groupe_id', $groupe->id));
-                        if ($dateDebut) $absencesQuery->whereDate('date', '>=', $dateDebut);
-                        if ($dateFin) $absencesQuery->whereDate('date', '<=', $dateFin);
-                        $nbAbsences = $absencesQuery->count();
-                        $nbPresences = ($nbEtudiants * $nbSeances) - $nbAbsences;
-                        $taux = ($nbPresences / ($nbEtudiants * $nbSeances)) * 100;
-                        $resultats[] = [
-                            'groupe' => $groupe->nom,
-                            'nb_etudiants' => $nbEtudiants,
-                            'nb_seances' => $nbSeances,
-                            'nb_absences' => $nbAbsences,
-                            'taux_presence' => round($taux, 2),
-                        ];
-                    } else {
-                        $resultats[] = [
-                            'groupe' => $groupe->nom,
-                            'nb_etudiants' => $nbEtudiants,
-                            'nb_seances' => $nbSeances,
-                            'nb_absences' => 0,
-                            'taux_presence' => 0,
-                        ];
-                    }
-                }
-                $data = $resultats;
-                $title = "Rapport de présence";
-                break;
+    $groupesQuery = Groupe::with(['etudiants', 'seances.module']);
+    if ($groupeId) {
+        $groupesQuery->where('id', $groupeId);
+    } elseif ($filiereId) {
+        $groupesQuery->where('filiere_id', $filiereId);
+    }
+    $groupesList = $groupesQuery->get();
+    $resultats = [];
+
+    foreach ($groupesList as $groupe) {
+        // Séances théoriques totales pour le groupe (somme sur tous ses modules)
+        $modulesIds = $groupe->seances->pluck('module_id')->unique();
+        $seancesTheoriques = 0;
+        foreach ($modulesIds as $moduleId) {
+            $module = Module::find($moduleId);
+            if ($module) {
+                $seancesTheoriques += ceil($module->volume_horaire / 2);
+            }
+        }
+
+        // Absences réelles
+        $absencesReelles = Absence::whereHas('seance', function ($q) use ($groupe) {
+            $q->where('groupe_id', $groupe->id);
+        })->count();
+
+        $tauxPresence = $seancesTheoriques > 0
+            ? round((1 - ($absencesReelles / $seancesTheoriques)) * 100, 2)
+            : 0;
+
+        $resultats[] = [
+            'groupe' => $groupe->nom,
+            'nb_etudiants' => $groupe->etudiants->count(),
+            'seances_theoriques' => $seancesTheoriques,
+            'absences_reelles' => $absencesReelles,
+            'taux_presence' => $tauxPresence,
+        ];
+    }
+
+    $data = $resultats;
+    $title = "Rapport de présence (basé sur le volume horaire)";
+    break;
 
             case 'comparaison':
-    $filiere1_id = $request->input('filiere_id');
-    $filiere2_id = $request->input('filiere_id2');
+                $filiere1_id = $request->input('filiere_id');
+                $filiere2_id = $request->input('filiere_id2');
 
-    if (!$filiere1_id || !$filiere2_id) {
-        $data = null;
-        $title = "Veuillez sélectionner deux filières.";
-    } else {
-        $filiere1 = Filiere::find($filiere1_id);
-        $filiere2 = Filiere::find($filiere2_id);
+                if (!$filiere1_id || !$filiere2_id) {
+                    $data = null;
+                    $title = "Veuillez sélectionner deux filières.";
+                } else {
+                    $filiere1 = Filiere::find($filiere1_id);
+                    $filiere2 = Filiere::find($filiere2_id);
 
-        if (!$filiere1 || !$filiere2) {
-            $data = null;
-            $title = "Une ou deux filières introuvables.";
-        } else {
-            // Effectifs
-            $effectif1 = User::where('role', 'etudiant')
-                ->whereHas('groupe', fn($q) => $q->where('filiere_id', $filiere1->id))
-                ->count();
-            $effectif2 = User::where('role', 'etudiant')
-                ->whereHas('groupe', fn($q) => $q->where('filiere_id', $filiere2->id))
-                ->count();
+                    if (!$filiere1 || !$filiere2) {
+                        $data = null;
+                        $title = "Une ou deux filières introuvables.";
+                    } else {
+                        // Effectifs
+                        $effectif1 = User::where('role', 'etudiant')
+                            ->whereHas('groupe', fn($q) => $q->where('filiere_id', $filiere1->id))
+                            ->count();
+                        $effectif2 = User::where('role', 'etudiant')
+                            ->whereHas('groupe', fn($q) => $q->where('filiere_id', $filiere2->id))
+                            ->count();
 
-            // Taux de présence et absences
-            $groupes1 = Groupe::where('filiere_id', $filiere1->id)->get();
-            $groupes2 = Groupe::where('filiere_id', $filiere2->id)->get();
-
-            $totalSeances1 = 0;
-            $totalAbsences1 = 0;
-            foreach ($groupes1 as $g) {
-                $nbSeances = $g->seances()->count();
-                $totalSeances1 += $nbSeances * $g->etudiants->count();
-                $totalAbsences1 += Absence::whereHas('seance', fn($q) => $q->where('groupe_id', $g->id))->count();
-            }
-            $totalPresences1 = $totalSeances1 - $totalAbsences1;
-            $tauxPresence1 = $totalSeances1 > 0 ? round(($totalPresences1 / $totalSeances1) * 100, 2) : 0;
-
-            $totalSeances2 = 0;
-            $totalAbsences2 = 0;
-            foreach ($groupes2 as $g) {
-                $nbSeances = $g->seances()->count();
-                $totalSeances2 += $nbSeances * $g->etudiants->count();
-                $totalAbsences2 += Absence::whereHas('seance', fn($q) => $q->where('groupe_id', $g->id))->count();
-            }
-            $totalPresences2 = $totalSeances2 - $totalAbsences2;
-            $tauxPresence2 = $totalSeances2 > 0 ? round(($totalPresences2 / $totalSeances2) * 100, 2) : 0;
-
-            // Moyennes des notes
-            $moyenne1 = Note::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere1->id))
-                ->get()->avg(fn($n) => ($n->controle_continu + $n->examen_finale) / 2) ?? 0;
-            $moyenne2 = Note::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere2->id))
-                ->get()->avg(fn($n) => ($n->controle_continu + $n->examen_finale) / 2) ?? 0;
-
-            $data = [
-                'filiere1' => $filiere1->nom,
-                'filiere2' => $filiere2->nom,
-                'effectif1' => $effectif1,
-                'effectif2' => $effectif2,
-                'taux_presence1' => $tauxPresence1,
-                'taux_presence2' => $tauxPresence2,
-                'total_absences1' => $totalAbsences1,
-                'total_absences2' => $totalAbsences2,
-                'moyenne1' => round($moyenne1, 2),
-                'moyenne2' => round($moyenne2, 2),
-                'difference_moyenne' => round($moyenne1 - $moyenne2, 2),
-            ];
-            $title = "Comparaison entre deux filières";
-        }
+                        // Taux de présence pour la filière 1
+$groupes1 = Groupe::where('filiere_id', $filiere1->id)->get();
+$seancesTheoriques1 = 0;
+$absencesReelles1 = 0;
+foreach ($groupes1 as $g) {
+    $modulesIds = $g->seances->pluck('module_id')->unique();
+    foreach ($modulesIds as $moduleId) {
+        $module = Module::find($moduleId);
+        if ($module) $seancesTheoriques1 += ceil($module->volume_horaire / 2);
     }
-    break;
+    $absencesReelles1 += Absence::whereHas('seance', fn($q) => $q->where('groupe_id', $g->id))->count();
+}
+$tauxPresence1 = $seancesTheoriques1 > 0
+    ? round((1 - ($absencesReelles1 / $seancesTheoriques1)) * 100, 2)
+    : 0;
+
+// Idem pour la filière 2
+$groupes2 = Groupe::where('filiere_id', $filiere2->id)->get();
+$seancesTheoriques2 = 0;
+$absencesReelles2 = 0;
+foreach ($groupes2 as $g) {
+    $modulesIds = $g->seances->pluck('module_id')->unique();
+    foreach ($modulesIds as $moduleId) {
+        $module = Module::find($moduleId);
+        if ($module) $seancesTheoriques2 += ceil($module->volume_horaire / 2);
+    }
+    $absencesReelles2 += Absence::whereHas('seance', fn($q) => $q->where('groupe_id', $g->id))->count();
+}
+$tauxPresence2 = $seancesTheoriques2 > 0
+    ? round((1 - ($absencesReelles2 / $seancesTheoriques2)) * 100, 2)
+    : 0;
+
+                        // Moyennes des notes
+                        $moyenne1 = Note::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere1->id))
+                            ->get()->avg(fn($n) => ($n->controle_continu + $n->examen_finale) / 2) ?? 0;
+                        $moyenne2 = Note::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere2->id))
+                            ->get()->avg(fn($n) => ($n->controle_continu + $n->examen_finale) / 2) ?? 0;
+
+                        // Total absences (nombre d’absences, pas heures) pour chaque filière
+                        $totalAbsences1 = Absence::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere1->id))->count();
+                        $totalAbsences2 = Absence::whereHas('etudiant.groupe', fn($q) => $q->where('filiere_id', $filiere2->id))->count();
+
+                        $data = [
+                            'filiere1' => $filiere1->nom,
+                            'filiere2' => $filiere2->nom,
+                            'effectif1' => $effectif1,
+                            'effectif2' => $effectif2,
+                            'taux_presence1' => $tauxPresence1,
+                            'taux_presence2' => $tauxPresence2,
+                            'total_absences1' => $totalAbsences1,
+                            'total_absences2' => $totalAbsences2,
+                            'moyenne1' => round($moyenne1, 2),
+                            'moyenne2' => round($moyenne2, 2),
+                            'difference_moyenne' => round($moyenne1 - $moyenne2, 2),
+                        ];
+                        $title = "Comparaison entre deux filières";
+                    }
+                }
+                break;
 
             default:
                 return null;

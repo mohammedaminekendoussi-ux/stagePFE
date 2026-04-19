@@ -128,4 +128,10 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
                          ->with('success', 'Utilisateur supprimé avec succès !');
     }
+    public function show($id)
+{
+    $user = User::with('groupe.filiere')->findOrFail($id);
+    // Vous pouvez créer une vue simple pour afficher les détails de l'étudiant
+    return view('admin.users.show', compact('user'));
+}
 }

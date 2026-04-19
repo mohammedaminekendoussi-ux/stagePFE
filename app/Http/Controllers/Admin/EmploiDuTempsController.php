@@ -63,49 +63,51 @@ class EmploiDuTempsController extends Controller
         ));
     }
 
-    // Récupérer les formateurs actif
-    public function getFormateurs(Request $request, $moduleId = null)
+    // Récupérer le formateur du module (option 2)
+public function getFormateurs(Request $request, $moduleId = null)
 {
     $jour    = $request->jour;
     $creneau = $request->creneau;
     $excludeId = $request->exclude_id;
 
-    // Récupérer TOUS les formateurs actifs, pas seulement celui du module
-    $formateurs = User::where('role', 'formateur')
-                      ->where('actif', true)
-                      ->get(['id', 'nom', 'prenom']);
-
-    // Si on a un jour et un créneau, on vérifie la disponibilité
-    if ($jour && $creneau) {
-        [$debut, $fin] = explode('-', $creneau);
-        $formateursOccupes = Seance::where('jour', $jour)
-            ->where('h_debut', $debut . ':00')
-            ->where('h_fin', $fin . ':00')
-            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->pluck('formateur_id')
-            ->toArray();
-
-        $formateurs = $formateurs->map(function($f) use ($formateursOccupes) {
-            return [
-                'id'         => $f->id,
-                'nom'        => $f->nom,
-                'prenom'     => $f->prenom,
-                'disponible' => !in_array($f->id, $formateursOccupes),
-            ];
-        });
-    } else {
-        // Par défaut, tous disponibles
-        $formateurs = $formateurs->map(function($f) {
-            return [
-                'id'         => $f->id,
-                'nom'        => $f->nom,
-                'prenom'     => $f->prenom,
-                'disponible' => true,
-            ];
-        });
+    if (!$moduleId) {
+        return response()->json([]);
     }
 
-    return response()->json($formateurs);
+    $module = Module::find($moduleId);
+    if (!$module) {
+        return response()->json([]);
+    }
+
+    $formateur = User::where('id', $module->formateur_id)
+        ->where('actif', true)
+        ->first(['id', 'nom', 'prenom']);
+
+    if (!$formateur) {
+        return response()->json([]);
+    }
+
+    // Vérifier la disponibilité du formateur sur ce créneau
+    $disponible = true;
+    if ($jour && $creneau) {
+        [$debut, $fin] = explode('-', $creneau);
+        $existe = Seance::where('jour', $jour)
+            ->where('h_debut', $debut . ':00')
+            ->where('h_fin', $fin . ':00')
+            ->where('formateur_id', $formateur->id)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+        $disponible = !$existe;
+    }
+
+    $result = [[
+        'id'         => $formateur->id,
+        'nom'        => $formateur->nom,
+        'prenom'     => $formateur->prenom,
+        'disponible' => $disponible,
+    ]];
+
+    return response()->json($result);
 }
 
     // Vérifier les conflits

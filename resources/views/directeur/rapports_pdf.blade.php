@@ -56,7 +56,7 @@
                     @elseif($rapportData->type == 'notes')
                         <th>Étudiant</th><th>Module</th><th>Contrôle continu</th><th>Examen final</th><th>Moyenne</th>
                     @elseif($rapportData->type == 'presence')
-                        <th>Groupe</th><th>Nb étudiants</th><th>Nb séances</th><th>Nb absences</th><th>Taux présence (%)</th>
+    <th>Groupe</th><th>Nb étudiants</th><th>Séances théoriques</th><th>Absences réelles</th><th>Taux présence (%)</th>
                     @endif
                 </tr>
             </thead>
@@ -76,11 +76,11 @@
                         <td>{{ $item->examen_finale ?? '-' }}</td>
                         <td>{{ round(($item->controle_continu + $item->examen_finale)/2, 2) }}</td>
                     @elseif($rapportData->type == 'presence')
-                        <td>{{ is_array($item) ? $item['groupe'] : $item->groupe }}</td>
-                        <td>{{ is_array($item) ? $item['nb_etudiants'] : $item->nb_etudiants }}</td>
-                        <td>{{ is_array($item) ? $item['nb_seances'] : $item->nb_seances }}</td>
-                        <td>{{ is_array($item) ? $item['nb_absences'] : $item->nb_absences }}</td>
-                        <td>{{ is_array($item) ? $item['taux_presence'] : $item->taux_presence }}%</td>
+    <td>{{ is_array($item) ? $item['groupe'] : $item->groupe }}</td>
+    <td>{{ is_array($item) ? $item['nb_etudiants'] : $item->nb_etudiants }}</td>
+    <td>{{ is_array($item) ? $item['seances_theoriques'] : $item->seances_theoriques }}</td>
+    <td>{{ is_array($item) ? $item['absences_reelles'] : $item->absences_reelles }}</td>
+    <td>{{ is_array($item) ? $item['taux_presence'] : $item->taux_presence }}%</td>
                     @endif
                 </tr>
                 @empty

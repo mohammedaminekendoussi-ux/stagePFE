@@ -57,30 +57,42 @@ class AbsenceController extends Controller
     }
 
     public function store(Request $request, $seanceId)
-    {
-        $formateur = auth()->user();
-        $seance = Seance::findOrFail($seanceId);
-        $date = $request->input('date', now()->format('Y-m-d'));
+{
+    $formateur = auth()->user();
+    $seance = Seance::findOrFail($seanceId);
+    $date = $request->input('date', now()->format('Y-m-d'));
 
-        if ($seance->formateur_id != $formateur->id) abort(403);
+    if ($seance->formateur_id != $formateur->id) abort(403);
 
-        $etudiantsDuGroupe = $seance->groupe->etudiants->pluck('id')->toArray();
-        $presents = $request->input('etudiants_presents', []);
-        $absents = array_diff($etudiantsDuGroupe, $presents);
+    $etudiantsDuGroupe = $seance->groupe->etudiants->pluck('id')->toArray();
+    $presents = $request->input('etudiants_presents', []);
 
-        // Supprimer les anciennes absences pour cette séance (remplacement)
-        Absence::where('seance_id', $seance->id)->delete();
+    // Pour chaque étudiant, on gère son absence UNIQUEMENT pour cette date
+    foreach ($etudiantsDuGroupe as $etudiantId) {
+        $absence = Absence::where('seance_id', $seance->id)
+                          ->where('date', $date)
+                          ->where('etudiant_id', $etudiantId)
+                          ->first();
 
-        foreach ($absents as $etudiantId) {
-            Absence::create([
-                'date' => $date,
-                'justifiee' => false,
-                'seance_id' => $seance->id,
-                'etudiant_id' => $etudiantId,
-            ]);
+        if (in_array($etudiantId, $presents)) {
+            // Étudiant présent : supprimer l'absence si elle existe pour cette date
+            if ($absence) {
+                $absence->delete();
+            }
+        } else {
+            // Étudiant absent : créer l'absence si elle n'existe pas pour cette date
+            if (!$absence) {
+                Absence::create([
+                    'date' => $date,
+                    'justifiee' => false,
+                    'seance_id' => $seance->id,
+                    'etudiant_id' => $etudiantId,
+                ]);
+            }
         }
-
-        return redirect()->route('formateur.absences.index', ['seance_id' => $seance->id, 'date' => $date])
-                         ->with('success', 'Présences enregistrées avec succès.');
     }
+
+    return redirect()->route('formateur.absences.index', ['seance_id' => $seance->id, 'date' => $date])
+                     ->with('success', 'Présences enregistrées avec succès.');
+}
 }
