@@ -30,6 +30,7 @@ class NoteController extends Controller
         foreach ($modules as $module) {
             $note = Note::where('module_id', $module->id)
                 ->where('etudiant_id', $etudiant->id)
+                ->where('validee', true)
                 ->first();
 
             $controle = $note ? $note->controle_continu : null;
