@@ -75,7 +75,9 @@ class AuthController extends Controller
 
         // Connecter l'utilisateur manuellement
         Auth::login($user);
-
+        if (is_null($user->password_changed_at)) {
+            return redirect('/change-password');
+        }
         // Rediriger selon le rôle
         return $this->redirectByRole($user);
     }
@@ -95,7 +97,7 @@ class AuthController extends Controller
         return match ($user->role) {
             'administrateur' => redirect()->route('admin.dashboard'),
             'directeur'      => redirect()->route('directeur.dashboard'),
-            'formateur'      => redirect()->route('formateur.dashboard'),
+            'formateur'      => redirect()->route('formateur.planning.index'),
             'etudiant'       => redirect()->route('etudiant.dashboard'),
             default          => redirect('/'),
         };

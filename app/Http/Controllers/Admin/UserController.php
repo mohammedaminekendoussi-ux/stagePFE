@@ -59,6 +59,7 @@ class UserController extends Controller
             'email'              => $request->email,
             'role'               => $request->role,
             'mot_de_passe'       => Hash::make($request->mot_de_passe),
+            'password_changed_at' => null, // ← nouveau
             'groupe_id'          => $request->role === 'etudiant' ? $request->groupe_id : null,
             'actif'              => true,
             'tentative_echec'    => 0,
@@ -128,4 +129,10 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
                          ->with('success', 'Utilisateur supprimé avec succès !');
     }
+    public function show($id)
+{
+    $user = User::with('groupe.filiere')->findOrFail($id);
+    // Vous pouvez créer une vue simple pour afficher les détails de l'étudiant
+    return view('admin.users.show', compact('user'));
+}
 }

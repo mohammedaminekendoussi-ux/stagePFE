@@ -107,68 +107,62 @@
                                     </div>
 
                                     {{-- Modal Modifier --}}
-                                    <div class="modal fade" id="modalEdit{{ $seance->id }}" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title fw-bold">
-                                                        <i class="bi bi-pencil text-primary"></i>
-                                                        {{ $jour }} {{ str_replace('-', ' - ', $creneau) }}
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <form method="POST" action="{{ route('admin.emploi.update', $seance->id) }}">
-                                                    @csrf @method('PUT')
-                                                    <input type="hidden" name="creneau" value="{{ $creneau }}">
-                                                    <div class="modal-body">
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Module</label>
-                                                            <select name="module_id" class="form-select module-select"
-                                                                    data-seance="{{ $seance->id }}" required>
-                                                                @foreach(\App\Models\Module::where('filiere_id', $groupe->filiere_id)->get() as $module)
-                                                                    <option value="{{ $module->id }}"
-                                                                        {{ $seance->module_id == $module->id ? 'selected' : '' }}>
-                                                                        {{ $module->nom }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Formateur</label>
-                                                            <select name="formateur_id" class="form-select formateur-select-{{ $seance->id }}" required>
-                                                                <option value="{{ $seance->formateur->id }}" selected>
-                                                                    {{ $seance->formateur->prenom }} {{ $seance->formateur->nom }}
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Salle <span class="text-danger">*</span></label>
-<select name="salle" class="form-select salle-edit-select"
-        data-jour="{{ $seance->jour }}"
-        data-creneau="{{ $creneau }}"
-        data-exclude="{{ $seance->id }}" required>
-    <option value="{{ $seance->salle }}" selected>{{ $seance->salle }}</option>
-</select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        {{-- Supprimer --}}
-                                                        <form method="POST"
-                                                              action="{{ route('admin.emploi.destroy', $seance->id) }}"
-                                                              onsubmit="return confirm('Supprimer cette séance ?')"
-                                                              class="me-auto">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" class="btn btn-outline-danger">
-                                                                <i class="bi bi-trash"></i> Supprimer
-                                                            </button>
-                                                        </form>
-                                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                        
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
+<div class="modal fade" id="modalEdit{{ $seance->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-pencil text-primary"></i>
+                    {{ $jour }} {{ str_replace('-', ' - ', $creneau) }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            {{-- Formulaire de mise à jour --}}
+            <form method="POST" action="{{ route('admin.emploi.update', $seance->id) }}" id="updateForm{{ $seance->id }}">
+                @csrf @method('PUT')
+                <input type="hidden" name="creneau" value="{{ $creneau }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Module</label>
+                        <select name="module_id" class="form-select module-select" data-seance="{{ $seance->id }}" required>
+                            @foreach(\App\Models\Module::where('filiere_id', $groupe->filiere_id)->get() as $module)
+                                <option value="{{ $module->id }}" {{ $seance->module_id == $module->id ? 'selected' : '' }}>
+                                    {{ $module->nom }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Formateur</label>
+                        <select name="formateur_id" class="form-select formateur-select-{{ $seance->id }}" required>
+                            <option value="{{ $seance->formateur->id }}" selected>
+                                {{ $seance->formateur->prenom }} {{ $seance->formateur->nom }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Salle <span class="text-danger">*</span></label>
+                        <select name="salle" class="form-select salle-edit-select"
+                                data-jour="{{ $seance->jour }}"
+                                data-creneau="{{ $creneau }}"
+                                data-exclude="{{ $seance->id }}" required>
+                            <option value="{{ $seance->salle }}" selected>{{ $seance->salle }}</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                {{-- Formulaire de suppression (indépendant) --}}
+                <form method="POST" action="{{ route('admin.emploi.destroy', $seance->id) }}" style="display: inline;">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Supprimer cette séance ?')">Supprimer</button>
+                </form>
+                <button type="submit" form="updateForm{{ $seance->id }}" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
 
                                 @else
                                     {{-- Case vide --}}
@@ -324,19 +318,19 @@ document.querySelectorAll('.module-add-select').forEach(function(select) {
 // Charger les formateurs dans les modals d'édition quand ils s'ouvrent
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('show.bs.modal', function(event) {
-        // On cherche le select des formateurs dans ce modal
         const formateurSelect = modal.querySelector('select[name="formateur_id"]');
+        const moduleSelect = modal.querySelector('select[name="module_id"]');
         const salleSelect = modal.querySelector('select[name="salle"]');
         if (!formateurSelect) return;
 
-        // Récupérer les infos du jour/creneau depuis les data-attributes du select de salle (ou autre)
-        const jour = modal.querySelector('.salle-edit-select')?.dataset.jour;
-        const creneau = modal.querySelector('.salle-edit-select')?.dataset.creneau;
-        const excludeId = modal.querySelector('.salle-edit-select')?.dataset.exclude;
-        const currentFormateurId = formateurSelect.value; // valeur actuelle
+        const jour = salleSelect?.dataset.jour;
+        const creneau = salleSelect?.dataset.creneau;
+        const excludeId = salleSelect?.dataset.exclude;
+        const currentFormateurId = formateurSelect.value;
+        const moduleId = moduleSelect ? moduleSelect.value : 0;
 
-        if (jour && creneau) {
-            fetch(`/stagePFE/public/admin/emploi/formateurs/0?jour=${jour}&creneau=${creneau}&exclude_id=${excludeId}`)
+        if (jour && creneau && moduleId) {
+            fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&exclude_id=${excludeId}`)
                 .then(r => r.json())
                 .then(formateurs => {
                     formateurSelect.innerHTML = '';
@@ -349,8 +343,38 @@ document.querySelectorAll('.modal').forEach(modal => {
                         option.disabled = !f.disponible;
                         if (f.id == currentFormateurId) {
                             option.selected = true;
-                            option.disabled = false; // on force la sélection même si occupé
+                            option.disabled = false;
                         }
+                        formateurSelect.appendChild(option);
+                    });
+                });
+        }
+    });
+});
+
+// Recharger les formateurs dynamiquement quand le module change dans un modal de modification
+document.querySelectorAll('.module-select').forEach(function(select) {
+    select.addEventListener('change', function() {
+        const moduleId = this.value;
+        const modal = this.closest('.modal');
+        const formateurSelect = modal.querySelector('select[name="formateur_id"]');
+        const salleSelect = modal.querySelector('select[name="salle"]');
+        const jour = salleSelect?.dataset.jour;
+        const creneau = salleSelect?.dataset.creneau;
+        const excludeId = salleSelect?.dataset.exclude;
+
+        if (moduleId && jour && creneau) {
+            fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&exclude_id=${excludeId}`)
+                .then(r => r.json())
+                .then(formateurs => {
+                    formateurSelect.innerHTML = '';
+                    formateurs.forEach(f => {
+                        const option = document.createElement('option');
+                        option.value = f.id;
+                        option.textContent = f.disponible
+                            ? `${f.prenom} ${f.nom}`
+                            : `${f.prenom} ${f.nom} (occupé)`;
+                        option.disabled = !f.disponible;
                         formateurSelect.appendChild(option);
                     });
                 });

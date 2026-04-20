@@ -54,4 +54,35 @@ class User extends Authenticatable
     {
         return $this->mot_de_passe;
     }
+    public function getTauxAbsenceParModule()
+{
+    $modules = Module::whereHas('seances', function($q) {
+        $q->whereIn('groupe_id', $this->groupe->pluck('id')); // ou via le groupe de l'étudiant
+    })->get();
+
+    $result = [];
+    foreach ($modules as $module) {
+        // Total heures de séances pour ce module
+        $heuresTotales = $module->seances->sum(function($seance) {
+            return (strtotime($seance->h_fin) - strtotime($seance->h_debut)) / 3600;
+        });
+        // Heures d'absence de l'étudiant pour ce module
+        $heuresAbsences = Absence::where('etudiant_id', $this->id)
+            ->whereHas('seance', function($q) use ($module) {
+                $q->where('module_id', $module->id);
+            })->get()->sum(function($absence) {
+                $seance = $absence->seance;
+                return (strtotime($seance->h_fin) - strtotime($seance->h_debut)) / 3600;
+            });
+        $taux = $heuresTotales > 0 ? round(($heuresAbsences / $heuresTotales) * 100, 2) : 0;
+        if ($taux > 20) {
+            $result[] = [
+                'module' => $module->nom,
+                'taux' => $taux,
+                'etudiant' => $this,
+            ];
+        }
+    }
+    return $result;
+}
 }

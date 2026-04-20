@@ -40,33 +40,46 @@ class DashboardController extends Controller
             ];
         });
 
-        // Taux de présence par groupe (filtre)
-        $groupesPresence = Groupe::with('etudiants', 'seances');
-        if ($filiereIdPresence) {
-            $groupesPresence->where('filiere_id', $filiereIdPresence);
-        }
-        $groupesPresence = $groupesPresence->get();
+        // Taux de présence par groupe (basé sur volume horaire)
+$groupesPresence = Groupe::with(['etudiants', 'seances.module']);
+if ($filiereIdPresence) {
+    $groupesPresence->where('filiere_id', $filiereIdPresence);
+}
+$groupesPresence = $groupesPresence->get();
 
-        $tauxPresenceParGroupe = [];
-        $totalPresence = 0;
-        $totalSeances = 0;
-        foreach ($groupesPresence as $groupe) {
-            $nbEtudiants = $groupe->etudiants->count();
-            $nbSeances = $groupe->seances->count();
-            if ($nbEtudiants > 0 && $nbSeances > 0) {
-                $nbAbsences = Absence::whereHas('seance', function($q) use ($groupe) {
-                    $q->where('groupe_id', $groupe->id);
-                })->count();
-                $nbPresences = ($nbEtudiants * $nbSeances) - $nbAbsences;
-                $taux = ($nbPresences / ($nbEtudiants * $nbSeances)) * 100;
-                $tauxPresenceParGroupe[$groupe->nom] = round($taux, 2);
-                $totalPresence += $nbPresences;
-                $totalSeances += ($nbEtudiants * $nbSeances);
-            } else {
-                $tauxPresenceParGroupe[$groupe->nom] = 0;
-            }
+$tauxPresenceParGroupe = [];
+$totalSeancesTheoriquesGlobal = 0;
+$totalAbsencesGlobal = 0;
+
+foreach ($groupesPresence as $groupe) {
+    // Calcul des séances théoriques totales pour ce groupe (tous modules confondus)
+    $modulesIds = $groupe->seances->pluck('module_id')->unique();
+    $seancesTheoriques = 0;
+    foreach ($modulesIds as $moduleId) {
+        $module = Module::find($moduleId);
+        if ($module) {
+            $seancesTheoriques += ceil($module->volume_horaire / 2);
         }
-        $tauxPresenceGlobal = $totalSeances > 0 ? round(($totalPresence / $totalSeances) * 100, 2) : 0;
+    }
+
+    // Absences réelles pour ce groupe
+    $absencesReelles = Absence::whereHas('seance', function ($q) use ($groupe) {
+        $q->where('groupe_id', $groupe->id);
+    })->count();
+
+    $tauxPresence = $seancesTheoriques > 0
+        ? round((1 - ($absencesReelles / $seancesTheoriques)) * 100, 2)
+        : 0;
+
+    $tauxPresenceParGroupe[$groupe->nom] = $tauxPresence;
+
+    $totalSeancesTheoriquesGlobal += $seancesTheoriques;
+    $totalAbsencesGlobal += $absencesReelles;
+}
+
+$tauxPresenceGlobal = $totalSeancesTheoriquesGlobal > 0
+    ? round((1 - ($totalAbsencesGlobal / $totalSeancesTheoriquesGlobal)) * 100, 2)
+    : 0;
 
         // Modules les plus absents
         $modulesImpact = Module::leftJoin('seances', 'modules.id', '=', 'seances.module_id')

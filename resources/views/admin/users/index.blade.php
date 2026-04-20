@@ -5,6 +5,19 @@
 
 @section('content')
 
+<style>
+    /* Correction de la taille des icônes de pagination */
+.pagination .page-link i,
+.pagination .page-link .bi {
+    font-size: 0.8rem !important;
+    vertical-align: middle;
+}
+.pagination .page-link {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.7rem;
+}
+</style>
+
     {{-- Message succès --}}
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -84,7 +97,11 @@
                             <div class="d-flex align-items-center gap-2">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
                                      style="width:38px;height:38px;font-size:0.9rem;
-                                     background:{{ $user->role === 'administrateur' ? '#667eea' : ($user->role === 'formateur' ? '#f5576c' : '#43e97b') }}">
+                                     background:{{ 
+                                         $user->role === 'administrateur' ? '#667eea' : 
+                                         ($user->role === 'directeur' ? '#E67E22' : 
+                                         ($user->role === 'formateur' ? '#f5576c' : '#43e97b')) 
+                                     }}">
                                     {{ strtoupper(substr($user->prenom, 0, 1)) }}{{ strtoupper(substr($user->nom, 0, 1)) }}
                                 </div>
                                 <div>
@@ -95,14 +112,14 @@
                         <td class="text-muted">{{ $user->email }}</td>
                         <td>
                             @if($user->role === 'administrateur')
-    <span class="badge" style="background:#667eea">Administrateur</span>
-@elseif($user->role === 'directeur')
-    <span class="badge" style="background:#E67E22">Directeur</span>
-@elseif($user->role === 'formateur')
-    <span class="badge" style="background:#f5576c">Formateur</span>
-@else
-    <span class="badge" style="background:#43e97b;color:#1a1a1a">Étudiant</span>
-@endif
+                                <span class="badge" style="background:#667eea">Administrateur</span>
+                            @elseif($user->role === 'directeur')
+                                <span class="badge" style="background:#E67E22">Directeur</span>
+                            @elseif($user->role === 'formateur')
+                                <span class="badge" style="background:#f5576c">Formateur</span>
+                            @else
+                                <span class="badge" style="background:#43e97b;color:#1a1a1a">Étudiant</span>
+                            @endif
                         </td>
                         <td class="text-muted">
                             {{ $user->groupe ? $user->groupe->nom : '—' }}
@@ -158,7 +175,7 @@
         {{-- Pagination --}}
         @if($users->hasPages())
         <div class="card-footer bg-white">
-            {{ $users->appends(request()->query())->links() }}
+            {{ $users->appends(request()->query())->links('vendor.pagination.bootstrap-icons') }}
         </div>
         @endif
     </div>

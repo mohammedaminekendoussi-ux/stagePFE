@@ -83,6 +83,60 @@
             </div>
         </div>
 
+
+<!-- Alertes absences critiques (version simplifiée) -->
+@if(isset($alertesAbsences) && count($alertesAbsences) > 0)
+<div class="card border-danger mb-4 shadow-sm">
+    <div class="card-header bg-danger text-white py-3">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.5rem;"></i>
+            <h5 class="mb-0 fw-bold">Alertes d'absence critiques (>20%)</h5>
+            <span class="badge bg-light text-danger ms-3 rounded-pill">{{ count($alertesAbsences) }} alerte(s)</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Étudiant</th>
+                        <th>Module</th>
+                        <th>Taux d'absence</th>
+                        <th>Absences / Séances</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($alertesAbsences as $alerte)
+                    <tr>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ $alerte['etudiant']->prenom }} {{ $alerte['etudiant']->nom }}</div>
+                                    <div class="small text-muted">{{ $alerte['etudiant']->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="align-middle fw-semibold">{{ $alerte['module']->nom }}</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ min($alerte['taux'], 100) }}%;"></div>
+                                </div>
+                                <span class="badge bg-danger">{{ $alerte['taux'] }}%</span>
+                            </div>
+                        </td>
+                        <td class="align-middle">{{ $alerte['absencesReelles'] }} / {{ $alerte['seancesTheoriques'] }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
         <!-- Sauvegardage BDD -->
         <div class="row mt-4">
     <div class="col-12">
