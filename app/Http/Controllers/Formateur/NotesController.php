@@ -16,9 +16,16 @@ class NotesController extends Controller
     {
         $formateur = auth()->user();
 
-        // Filtrer les modules du formateur
+        // Modules du formateur
         $modules = Module::where('formateur_id', $formateur->id)->get();
-        $filieres = Filiere::all();
+
+        // Récupérer les IDs des filières liées aux modules du formateur
+        $filiereIds = Module::where('formateur_id', $formateur->id)
+            ->join('filieres', 'modules.filiere_id', '=', 'filieres.id')
+            ->distinct()
+            ->pluck('modules.filiere_id');
+        $filieres = Filiere::whereIn('id', $filiereIds)->get();
+
         $groupes = collect();
         $etudiants = collect();
         $moduleId = $request->get('module_id');
@@ -29,12 +36,11 @@ class NotesController extends Controller
             // Vérifier que le module appartient bien au formateur
             $module = Module::where('id', $moduleId)->where('formateur_id', $formateur->id)->first();
             if ($module) {
-                $groupes = Groupe::where('id', $groupeId)->get(); // ou tous les groupes de la filière
+                $groupes = Groupe::where('id', $groupeId)->get();
                 $etudiants = User::where('role', 'etudiant')
                     ->where('groupe_id', $groupeId)
                     ->orderBy('nom')
                     ->get();
-                // Récupérer les notes existantes pour ce module et ces étudiants
                 foreach ($etudiants as $etudiant) {
                     $note = Note::where('module_id', $moduleId)
                         ->where('etudiant_id', $etudiant->id)
@@ -52,6 +58,7 @@ class NotesController extends Controller
         return view('formateur.notes.index', compact('modules', 'filieres', 'groupes', 'etudiants', 'notes', 'moduleId', 'groupeId'));
     }
 
+    // Les méthodes save et validateNotes restent identiques à l'ancienne version
     public function save(Request $request)
     {
         $request->validate([
@@ -77,7 +84,6 @@ class NotesController extends Controller
                 [
                     'controle_continu' => $noteData['controle_continu'] ?? null,
                     'examen_finale' => $noteData['examen_finale'] ?? null,
-                    // On ne change pas 'validee' ici, elle reste inchangée
                 ]
             );
         }
