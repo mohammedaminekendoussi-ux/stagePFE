@@ -120,7 +120,7 @@ class EmploiDuTempsController extends Controller
                 ->where('h_debut', $debut . ':00')
                 ->where('h_fin', $fin . ':00')
                 ->where('formateur_id', $formateur->id)
-                ->whereHas('module', fn($q) => $q->where('semestre', $semestre))
+                ->whereHas('module', fn($q) => $q->whereRaw('semestre % 2 = ?', [$semestre % 2]))
                 ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
                 ->exists();
             $disponible = !$existe;
@@ -149,7 +149,7 @@ class EmploiDuTempsController extends Controller
         $query = Seance::where('jour', $jour)
             ->where('h_debut', $debut . ':00')
             ->where('h_fin', $fin . ':00')
-            ->whereHas('module', fn($q) => $q->where('semestre', $semestre))
+            ->whereHas('module', fn($q) => $q->whereRaw('semestre % 2 = ?', [$semestre % 2]))
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId));
 
         $sallesOccupees = $query->pluck('salle')->toArray();
@@ -173,7 +173,9 @@ class EmploiDuTempsController extends Controller
             });
 
         if ($excludeId) $query->where('id', '!=', $excludeId);
-        if ($semestre) $query->whereHas('module', fn($q) => $q->where('semestre', $semestre));
+        if ($semestre !== null) {
+            $query->whereHas('module', fn($q) => $q->whereRaw('semestre % 2 = ?', [$semestre % 2]));
+        }
 
         $conflitFormateur = (clone $query)->where('formateur_id', $formateurId)->exists();
         $conflitSalle = (clone $query)->where('salle', $salle)->where('groupe_id', '!=', $groupeId)->exists();
@@ -203,8 +205,8 @@ class EmploiDuTempsController extends Controller
             $request->groupe_id, null, $semestre
         );
 
-        if ($conflits['formateur']) return back()->with('error', '⚠️ Ce formateur est déjà occupé à cet horaire pour ce semestre !');
-        if ($conflits['salle']) return back()->with('error', '⚠️ Cette salle est déjà réservée à cet horaire pour ce semestre !');
+        if ($conflits['formateur']) return back()->with('error', '⚠️ Ce formateur est déjà occupé à cet horaire pour ce semestre (impairs entre eux, pairs entre eux) !');
+        if ($conflits['salle']) return back()->with('error', '⚠️ Cette salle est déjà réservée à cet horaire pour ce semestre (impairs entre eux, pairs entre eux) !');
 
         Seance::create([
             'jour'         => $request->jour,
@@ -244,8 +246,8 @@ class EmploiDuTempsController extends Controller
             $seance->groupe_id, $id, $semestre
         );
 
-        if ($conflits['formateur']) return back()->with('error', '⚠️ Ce formateur est déjà occupé à cet horaire pour ce semestre !');
-        if ($conflits['salle']) return back()->with('error', '⚠️ Cette salle est déjà réservée à cet horaire pour ce semestre !');
+        if ($conflits['formateur']) return back()->with('error', '⚠️ Ce formateur est déjà occupé à cet horaire pour ce semestre (impairs entre eux, pairs entre eux) !');
+        if ($conflits['salle']) return back()->with('error', '⚠️ Cette salle est déjà réservée à cet horaire pour ce semestre (impairs entre eux, pairs entre eux) !');
 
         $seance->update([
             'module_id'    => $request->module_id,

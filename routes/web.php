@@ -95,6 +95,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::post('/notes/validate', [NotesController::class, 'validateNotes'])->name('notes.validate');
         Route::get('/absences', [AbsenceController::class, 'index'])->name('absences.index');
         Route::post('/absences/{seanceId}', [AbsenceController::class, 'store'])->name('absences.store');
+        // Dans le groupe formateur
+        Route::get('/groupes/{filiereId}', [NotesController::class, 'getGroupes'])->name('notes.groupes');
+        Route::get('/modules/{groupeId}', [NotesController::class, 'getModules'])->name('notes.modules');
     });
 
     // Étudiant
@@ -104,6 +107,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/cours/telecharger/{id}', [App\Http\Controllers\Etudiant\CoursController::class, 'telecharger'])->name('cours.telecharger');
         Route::get('/notes', [App\Http\Controllers\Etudiant\NoteController::class, 'index'])->name('notes');
         Route::get('/absences', [App\Http\Controllers\Etudiant\AbsenceController::class, 'index'])->name('absences');
+        
     });
 
 });

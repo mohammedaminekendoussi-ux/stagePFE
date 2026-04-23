@@ -12,58 +12,71 @@ use App\Models\Note;
 
 class NotesController extends Controller
 {
-// Détermine automatiquement le groupe de semestres (impair/pair) selon la date
-    private function getSemestreGroupeParDefaut()
+    private function getSemestresPossibles($annee)
     {
-        $mois = now()->month;
-        // Septembre (9) à Février (2) -> impairs (S1,S3,S5)
-        // Mars (3) à Août (8) -> pairs (S2,S4,S6)
-        if ($mois >= 9 || $mois <= 2) {
-            return 'impair';
-        } else {
-            return 'pair';
+        switch ($annee) {
+            case 1: return [1, 2];
+            case 2: return [3, 4];
+            case 3: return [5, 6];
+            default: return [1, 2];
         }
+    }
+
+    private function getSemestreParAnneeEtDate($annee)
+    {
+        $semestresPossibles = $this->getSemestresPossibles($annee);
+        $mois = now()->month;
+        $isImpair = ($mois >= 9 || $mois <= 2);
+        
+        if ($isImpair) {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 1) return $s;
+            }
+        } else {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 0) return $s;
+            }
+        }
+        return $semestresPossibles[0] ?? 1;
     }
 
     public function index(Request $request)
     {
         $formateur = auth()->user();
-
-        // Groupe de semestre automatique
-        $groupeSemestre = $this->getSemestreGroupeParDefaut();
-
-        // Semestre spécifique choisi par l'utilisateur (1,2,3,4,5,6)
-        $semestre = $request->get('semestre');
-
-        // Construction de la requête des modules du formateur
-        $query = Module::where('formateur_id', $formateur->id);
-
-        // Filtrage par semestre spécifique (si choisi)
-        if ($semestre) {
-            $query->where('semestre', $semestre);
-        } else {
-            // Sinon, on filtre par groupe (impair/pair) pour limiter l'affichage par défaut
-            if ($groupeSemestre == 'impair') {
-                $query->whereRaw('semestre % 2 = 1');
-            } else {
-                $query->whereRaw('semestre % 2 = 0');
-            }
-        }
-
-        $modules = $query->get();
-
-        // Récupérer les filières concernées par ces modules
-        $filiereIds = $modules->pluck('filiere_id')->unique();
-        $filieres = Filiere::whereIn('id', $filiereIds)->get();
-
-        // Groupes (filtrés par filière si demandé)
-        $groupes = collect();
-        if ($request->filled('filiere_id')) {
-            $groupes = Groupe::where('filiere_id', $request->filiere_id)->get();
-        }
-
-        $moduleId = $request->get('module_id');
+        $filiereId = $request->get('filiere_id');
         $groupeId = $request->get('groupe_id');
+        $moduleId = $request->get('module_id');
+
+        // Toutes les filières où le formateur a des modules
+        $allFilieres = Filiere::whereHas('modules', function($q) use ($formateur) {
+            $q->where('formateur_id', $formateur->id);
+        })->get();
+
+        // Groupes de la filière sélectionnée
+        $groupes = collect();
+        if ($filiereId) {
+            $groupes = Groupe::where('filiere_id', $filiereId)->get();
+        }
+
+        // Modules : filtre par filière, par semestre automatique et par séances existantes
+        $modules = collect();
+        if ($filiereId) {
+            $query = Module::where('formateur_id', $formateur->id)
+                ->where('filiere_id', $filiereId);
+            
+            if ($groupeId) {
+                $groupe = Groupe::find($groupeId);
+                if ($groupe) {
+                    $semestreActuel = $this->getSemestreParAnneeEtDate($groupe->annee);
+                    $query->where('semestre', $semestreActuel)
+                          ->whereHas('seances', function($q) use ($groupeId) {
+                              $q->where('groupe_id', $groupeId);
+                          });
+                }
+            }
+            $modules = $query->get();
+        }
+
         $etudiants = collect();
         $notes = [];
 
@@ -83,16 +96,7 @@ class NotesController extends Controller
             }
         }
 
-        return view('formateur.notes.index', compact(
-            'modules',
-            'filieres',
-            'groupes',
-            'etudiants',
-            'notes',
-            'moduleId',
-            'groupeId',
-            'groupeSemestre'
-        ));
+        return view('formateur.notes.index', compact('allFilieres', 'groupes', 'modules', 'etudiants', 'notes', 'filiereId', 'groupeId', 'moduleId'));
     }
 
     public function save(Request $request)
@@ -123,11 +127,9 @@ class NotesController extends Controller
         }
 
         return redirect()->route('formateur.notes.index', [
-            'module_id' => $module->id,
-            'groupe_id' => $request->groupe_id,
             'filiere_id' => $request->filiere_id,
-            'groupe_semestre' => $request->groupe_semestre,
-            'semestre' => $request->semestre,
+            'groupe_id' => $request->groupe_id,
+            'module_id' => $module->id,
         ])->with('success', 'Notes sauvegardées.');
     }
 
@@ -152,11 +154,9 @@ class NotesController extends Controller
         }
 
         return redirect()->route('formateur.notes.index', [
-            'module_id' => $module->id,
-            'groupe_id' => $request->groupe_id,
             'filiere_id' => $request->filiere_id,
-            'groupe_semestre' => $request->groupe_semestre,
-            'semestre' => $request->semestre,
+            'groupe_id' => $request->groupe_id,
+            'module_id' => $module->id,
         ])->with('success', 'Notes validées.');
     }
 }

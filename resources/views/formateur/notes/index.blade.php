@@ -15,62 +15,44 @@
                     <label class="form-label fw-semibold">Filière</label>
                     <select name="filiere_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
-                        @foreach($filieres as $filiere)
-                            <option value="{{ $filiere->id }}" {{ request('filiere_id') == $filiere->id ? 'selected' : '' }}>{{ $filiere->nom }}</option>
+                        @foreach($allFilieres as $filiere)
+                            <option value="{{ $filiere->id }}" {{ $filiereId == $filiere->id ? 'selected' : '' }}>{{ $filiere->nom }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Groupe</label>
-                    <select name="groupe_id" class="form-select">
+                    <select name="groupe_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
                         @foreach($groupes as $groupe)
-                            <option value="{{ $groupe->id }}" {{ request('groupe_id') == $groupe->id ? 'selected' : '' }}>{{ $groupe->nom }}</option>
+                            <option value="{{ $groupe->id }}" {{ $groupeId == $groupe->id ? 'selected' : '' }}>{{ $groupe->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
-                {{-- Sélecteur de semestre (uniquement selon la période détectée) --}}
-                @if(isset($groupeSemestre))
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold">Semestre</label>
-                    <select name="semestre" class="form-select" onchange="this.form.submit()">
-                        <option value="">-- Choisir --</option>
-                        @if($groupeSemestre == 'impair')
-                            <option value="1" {{ request('semestre') == 1 ? 'selected' : '' }}>Semestre 1</option>
-                            <option value="3" {{ request('semestre') == 3 ? 'selected' : '' }}>Semestre 3</option>
-                            <option value="5" {{ request('semestre') == 5 ? 'selected' : '' }}>Semestre 5</option>
-                        @else
-                            <option value="2" {{ request('semestre') == 2 ? 'selected' : '' }}>Semestre 2</option>
-                            <option value="4" {{ request('semestre') == 4 ? 'selected' : '' }}>Semestre 4</option>
-                            <option value="6" {{ request('semestre') == 6 ? 'selected' : '' }}>Semestre 6</option>
-                        @endif
-                    </select>
-                </div>
-                @endif
-
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Module</label>
-                    <select name="module_id" class="form-select">
+                    <select name="module_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
                         @foreach($modules as $module)
-                            <option value="{{ $module->id }}" {{ request('module_id') == $module->id ? 'selected' : '' }}>{{ $module->nom }}</option>
+                            <option value="{{ $module->id }}" {{ $moduleId == $module->id ? 'selected' : '' }}>{{ $module->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-primary w-100">Charger</button>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Charger étudiants</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ route('formateur.notes.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
                 </div>
             </div>
         </form>
 
-        @if(isset($etudiants) && $etudiants->count() > 0 && $moduleId)
+        @if($etudiants->count() > 0 && $moduleId)
         <form method="POST" action="{{ route('formateur.notes.save') }}">
             @csrf
             <input type="hidden" name="module_id" value="{{ $moduleId }}">
-            <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
-            <input type="hidden" name="filiere_id" value="{{ request('filiere_id') }}">
-            <input type="hidden" name="semestre" value="{{ request('semestre') }}">
+            <input type="hidden" name="groupe_id" value="{{ $groupeId }}">
+            <input type="hidden" name="filiere_id" value="{{ $filiereId }}">
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-light">
@@ -116,7 +98,7 @@
             </div>
         </form>
 
-        <!-- Modal de confirmation pour validation -->
+        <!-- Modal -->
         <div class="modal fade" id="modalValider" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -131,8 +113,8 @@
                         <form method="POST" action="{{ route('formateur.notes.validate') }}">
                             @csrf
                             <input type="hidden" name="module_id" value="{{ $moduleId }}">
-                            <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
-                            <input type="hidden" name="semestre" value="{{ request('semestre') }}">
+                            <input type="hidden" name="groupe_id" value="{{ $groupeId }}">
+                            <input type="hidden" name="filiere_id" value="{{ $filiereId }}">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                             <button type="submit" class="btn btn-success">Oui, valider</button>
                         </form>
