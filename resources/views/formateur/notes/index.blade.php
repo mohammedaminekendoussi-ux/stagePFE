@@ -29,6 +29,26 @@
                         @endforeach
                     </select>
                 </div>
+
+                {{-- Sélecteur de semestre (uniquement selon la période détectée) --}}
+                @if(isset($groupeSemestre))
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Semestre</label>
+                    <select name="semestre" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Choisir --</option>
+                        @if($groupeSemestre == 'impair')
+                            <option value="1" {{ request('semestre') == 1 ? 'selected' : '' }}>Semestre 1</option>
+                            <option value="3" {{ request('semestre') == 3 ? 'selected' : '' }}>Semestre 3</option>
+                            <option value="5" {{ request('semestre') == 5 ? 'selected' : '' }}>Semestre 5</option>
+                        @else
+                            <option value="2" {{ request('semestre') == 2 ? 'selected' : '' }}>Semestre 2</option>
+                            <option value="4" {{ request('semestre') == 4 ? 'selected' : '' }}>Semestre 4</option>
+                            <option value="6" {{ request('semestre') == 6 ? 'selected' : '' }}>Semestre 6</option>
+                        @endif
+                    </select>
+                </div>
+                @endif
+
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Module</label>
                     <select name="module_id" class="form-select">
@@ -38,21 +58,19 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Charger étudiants</button>
-                </div>
                 <div class="col-md-1">
-                    <a href="{{ route('formateur.notes.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                    <button type="submit" class="btn btn-primary w-100">Charger</button>
                 </div>
             </div>
         </form>
 
-        @if($etudiants->count() > 0 && $moduleId)
+        @if(isset($etudiants) && $etudiants->count() > 0 && $moduleId)
         <form method="POST" action="{{ route('formateur.notes.save') }}">
             @csrf
             <input type="hidden" name="module_id" value="{{ $moduleId }}">
             <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
             <input type="hidden" name="filiere_id" value="{{ request('filiere_id') }}">
+            <input type="hidden" name="semestre" value="{{ request('semestre') }}">
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-light">
@@ -60,7 +78,7 @@
                             <th>Étudiant</th>
                             <th>Contrôle continu (0-20)</th>
                             <th>Examen final (0-20)</th>
-                            <th>Moyenne (coefficient: {{ $module->coefficient ?? '?' }})</th>
+                            <th>Moyenne</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -107,7 +125,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Attention : une fois les notes validées, elles deviendront consultables par les étudiants. Vous ne pourrez plus les modifier ? (Selon votre politique, vous pouvez autoriser les modifications après validation, mais le cahier des charges dit que validation rend visible.)</p>
                         <p>Voulez-vous vraiment valider toutes les notes pour ce module et ce groupe ?</p>
                     </div>
                     <div class="modal-footer">
@@ -115,6 +132,7 @@
                             @csrf
                             <input type="hidden" name="module_id" value="{{ $moduleId }}">
                             <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
+                            <input type="hidden" name="semestre" value="{{ request('semestre') }}">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                             <button type="submit" class="btn btn-success">Oui, valider</button>
                         </form>
@@ -128,7 +146,6 @@
 
 @push('scripts')
 <script>
-    // Calcul automatique de la moyenne lors de la saisie
     document.querySelectorAll('.note-cc, .note-exam').forEach(input => {
         input.addEventListener('input', function() {
             const row = this.closest('tr');

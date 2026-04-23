@@ -6,10 +6,20 @@
 @section('content')
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white py-3">
-        <h6 class="mb-0 fw-bold"><i class="bi bi-journal-bookmark-fill text-primary"></i> Relevé de notes</h6>
+        <ul class="nav nav-tabs card-header-tabs" id="semestreTab" role="tablist">
+            @foreach($semestresPossibles as $semestre)
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ $semestreActif == $semestre ? 'active' : '' }}" 
+                   href="{{ route('etudiant.notes', ['semestre' => $semestre]) }}" 
+                   role="tab">
+                    Semestre {{ $semestre }}
+                </a>
+            </li>
+            @endforeach
+        </ul>
     </div>
     <div class="card-body">
-        @if(count($notesData) > 0)
+        @if(!empty($notesParSemestre[$semestreActif]))
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -21,7 +31,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($notesData as $item)
+                        @foreach($notesParSemestre[$semestreActif] as $item)
                         <tr>
                             <td><strong>{{ $item->module->nom }}</strong></td>
                             <td>{{ $item->controle_continu ?? '-' }} /20</td>
@@ -38,12 +48,15 @@
                     </tbody>
                 </table>
             </div>
-            <div class="alert alert-info mt-4">
+            <div class="alert alert-info mt-3">
+                <strong>Moyenne du semestre {{ $semestreActif }} :</strong> {{ $moyennesParSemestre[$semestreActif] }} /20
+            </div>
+            <div class="alert alert-success mt-2">
                 <strong>Moyenne générale :</strong> {{ $moyenneGenerale }} /20
             </div>
         @else
             <div class="alert alert-warning">
-                Aucun module trouvé pour votre groupe. Veuillez contacter l'administrateur.
+                Aucune note trouvée pour ce semestre.
             </div>
         @endif
     </div>

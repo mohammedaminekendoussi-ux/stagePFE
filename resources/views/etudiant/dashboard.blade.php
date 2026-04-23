@@ -1,3 +1,4 @@
+{{-- resources/views/etudiant/dashboard.blade.php --}}
 @extends('layouts.etudiant')
 
 @section('title', 'Tableau de bord')
@@ -20,13 +21,23 @@
                 </div>
             </div>
         </div>
-        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold"><i class="bi bi-calendar-week"></i> Semaine du {{ now()->startOfWeek()->format('d/m') }} au {{ now()->endOfWeek()->format('d/m') }}</h5>
+                    <p class="text-muted">Emploi du temps de votre groupe (consultation seule)</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Emploi du temps -->
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <h6 class="mb-0 fw-bold"><i class="bi bi-calendar3 text-primary"></i> Emploi du temps — {{ $info['groupe'] }}</h6>
+            <h6 class="mb-0 fw-bold">
+                <i class="bi bi-calendar3 text-primary"></i>
+                Emploi du temps — {{ $info['groupe'] }} ({{ $semestreActuel }})
+            </h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">

@@ -14,7 +14,7 @@
     <div class="card-body">
         <form method="GET" action="{{ route('directeur.emploi.index') }}" id="formEmploi">
             <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Filière</label>
                     <select name="filiere_id" id="filiere_id" class="form-select" required>
                         <option value="">-- Choisir une filière --</option>
@@ -25,15 +25,30 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Groupe</label>
                     <select name="groupe_id" id="groupe_id" class="form-select" required>
                         <option value="">-- Choisir un groupe --</option>
-                        @foreach($groupes as $groupe)
-                            <option value="{{ $groupe->id }}" {{ request('groupe_id') == $groupe->id ? 'selected' : '' }}>
-                                {{ $groupe->nom }}
+                        @foreach($groupes as $g)
+                            <option value="{{ $g->id }}" {{ request('groupe_id') == $g->id ? 'selected' : '' }}>
+                                {{ $g->nom }}
                             </option>
                         @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Semestre</label>
+                    <select name="semestre" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tous ({{ $groupeSemestre == 'impair' ? 'impairs' : 'pairs' }})</option>
+                        @if($groupeSemestre == 'impair')
+                            <option value="1" {{ request('semestre') == 1 ? 'selected' : '' }}>Semestre 1</option>
+                            <option value="3" {{ request('semestre') == 3 ? 'selected' : '' }}>Semestre 3</option>
+                            <option value="5" {{ request('semestre') == 5 ? 'selected' : '' }}>Semestre 5</option>
+                        @else
+                            <option value="2" {{ request('semestre') == 2 ? 'selected' : '' }}>Semestre 2</option>
+                            <option value="4" {{ request('semestre') == 4 ? 'selected' : '' }}>Semestre 4</option>
+                            <option value="6" {{ request('semestre') == 6 ? 'selected' : '' }}>Semestre 6</option>
+                        @endif
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -53,7 +68,7 @@
     </div>
 </div>
 
-@if($groupe && request()->has('groupe_id'))
+@if($groupe)
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-bold">
@@ -106,15 +121,15 @@
 
 @section('scripts')
 <script>
-    const filiereSelect = document.getElementById('filiere_id');
-    const groupeSelect = document.getElementById('groupe_id');
-
-    filiereSelect.addEventListener('change', function() {
+    // Recharger les groupes quand la filière change
+    document.getElementById('filiere_id').addEventListener('change', function() {
         const filiereId = this.value;
-        const url = new URL(window.location.href);
-        url.searchParams.set('filiere_id', filiereId);
-        url.searchParams.delete('groupe_id');
-        window.location.href = url.toString();
+        if (filiereId) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('filiere_id', filiereId);
+            url.searchParams.delete('groupe_id');
+            window.location.href = url.toString();
+        }
     });
 </script>
 @endsection

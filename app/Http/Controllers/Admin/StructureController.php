@@ -148,9 +148,11 @@ class StructureController extends Controller
             'volume_horaire'=> 'required|integer|min:1',
             'filiere_id'    => 'required|exists:filieres,id',
             'formateur_id'  => 'required|exists:users,id',
+            // Validation
+            'semestre' => 'required|integer|min:1|max:6',
         ]);
 
-        Module::create($request->only('nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id'));
+        Module::create($request->only('nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id', 'semestre'));
 
         return redirect()->route('admin.structure.modules')
                          ->with('success', 'Module créé avec succès !');
@@ -166,9 +168,10 @@ class StructureController extends Controller
             'volume_horaire'=> 'required|integer|min:1',
             'filiere_id'    => 'required|exists:filieres,id',
             'formateur_id'  => 'required|exists:users,id',
+            'semestre' => 'required|integer|min:1|max:6',
         ]);
 
-        $module->update($request->only('nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id'));
+        $module->update($request->only('nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id', 'semestre'));
 
         return redirect()->route('admin.structure.modules')
                          ->with('success', 'Module modifié avec succès !');

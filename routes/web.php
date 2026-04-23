@@ -67,6 +67,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::delete('/emploi/{id}', [EmploiDuTempsController::class, 'destroy'])->name('emploi.destroy');
         Route::get('/emploi/formateurs/{moduleId}', [EmploiDuTempsController::class, 'getFormateurs'])->name('emploi.formateurs');
         Route::get('/emploi/salles', [EmploiDuTempsController::class, 'getSallesDisponibles'])->name('emploi.salles');
+        Route::get('/emploi/semestres/{groupeId}', [EmploiDuTempsController::class, 'getSemestresByGroupe'])->name('admin.emploi.semestres');
 
         Route::get('/backup', [BackupController::class, 'download'])->name('backup.download');
 

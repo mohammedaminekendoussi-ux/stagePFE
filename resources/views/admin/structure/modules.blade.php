@@ -38,8 +38,8 @@
             </div>
             <div class="col-md-2 text-end">
                 <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#modalAddModule">
-    <i class="bi bi-plus-circle"></i> Ajouter
-</button>
+                    <i class="bi bi-plus-circle"></i> Ajouter
+                </button>
             </div>
         </div>
     </form>
@@ -64,6 +64,7 @@
                     <th>Formateur</th>
                     <th class="text-center">Coefficient</th>
                     <th class="text-center">Volume horaire</th>
+                    <th class="text-center">Semestre</th>
                     <th class="text-center">Actions</th>
                 </tr>
             </thead>
@@ -95,6 +96,9 @@
                     </td>
                     <td class="text-center">
                         <span class="badge bg-info">{{ $module->volume_horaire }}h</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary">{{ $module->semestre ?? '-' }}</span>
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-1">
@@ -165,6 +169,15 @@
                                             @endforeach
                                         </select>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Semestre</label>
+                                        <select name="semestre" class="form-select" required>
+                                            <option value="">-- Choisir --</option>
+                                            @for($i = 1; $i <= 6; $i++)
+                                                <option value="{{ $i }}" {{ $module->semestre == $i ? 'selected' : '' }}>Semestre {{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -179,7 +192,7 @@
 
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="8" class="text-center py-5 text-muted">
                         <i class="bi bi-book" style="font-size:2rem"></i>
                         <div class="mt-2">Aucun module trouvé</div>
                     </td>
@@ -238,6 +251,15 @@
                                     {{ $formateur->prenom }} {{ $formateur->nom }}
                                 </option>
                             @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Semestre</label>
+                        <select name="semestre" class="form-select" required>
+                            <option value="">-- Choisir --</option>
+                            @for($i = 1; $i <= 6; $i++)
+                                <option value="{{ $i }}">Semestre {{ $i }}</option>
+                            @endfor
                         </select>
                     </div>
                 </div>
