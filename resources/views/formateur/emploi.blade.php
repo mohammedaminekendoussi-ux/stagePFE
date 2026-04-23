@@ -8,7 +8,7 @@
     <div class="card-header bg-white py-3">
         <h6 class="mb-0 fw-bold">
             <i class="bi bi-calendar-week text-primary"></i>
-            Mes séances (tous groupes)
+            {{ $groupeSemestre == 'impair' ? 'Semestres impairs (S1, S3, S5)' : 'Semestres pairs (S2, S4, S6)' }}
         </h6>
     </div>
     <div class="card-body p-0">

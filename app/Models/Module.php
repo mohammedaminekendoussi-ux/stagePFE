@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Module extends Model
 {
-    protected $fillable = ['nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id'];
+    protected $fillable = ['nom', 'coefficient', 'volume_horaire', 'filiere_id', 'formateur_id', 'semestre'];
 
     public function filiere()
     {

@@ -10,10 +10,36 @@ use Illuminate\Support\Facades\Storage;
 
 class CoursController extends Controller
 {
+    private function getSemestreGroupeParDefaut()
+    {
+        $mois = now()->month;
+        if ($mois >= 9 || $mois <= 2) {
+            return 'impair';
+        } else {
+            return 'pair';
+        }
+    }
+
     public function index(Request $request)
     {
         $formateur = auth()->user();
-        $modules = Module::where('formateur_id', $formateur->id)->get();
+        $groupeSemestre = $this->getSemestreGroupeParDefaut();
+        $semestreChoisi = $request->get('semestre');
+
+        // Récupérer les modules du formateur, filtrés par semestre si choisi
+        $query = Module::where('formateur_id', $formateur->id);
+        if ($semestreChoisi) {
+            $query->where('semestre', $semestreChoisi);
+        } else {
+            // Par défaut, on limite aux semestres du groupe courant
+            if ($groupeSemestre == 'impair') {
+                $query->whereRaw('semestre % 2 = 1');
+            } else {
+                $query->whereRaw('semestre % 2 = 0');
+            }
+        }
+        $modules = $query->get();
+
         $moduleId = $request->get('module_id');
         $supports = [];
 
@@ -24,7 +50,7 @@ class CoursController extends Controller
                 ->get();
         }
 
-        return view('formateur.cours.index', compact('modules', 'moduleId', 'supports'));
+        return view('formateur.cours.index', compact('modules', 'moduleId', 'supports', 'groupeSemestre'));
     }
 
     public function store(Request $request)
@@ -32,13 +58,12 @@ class CoursController extends Controller
         $request->validate([
             'module_id' => 'required|exists:modules,id',
             'titre' => 'required|string|max:255',
-            'fichier' => 'required|file|mimes:pdf,docx,ppt,pptx|max:10240', // 10 Mo
+            'fichier' => 'required|file|mimes:pdf,docx,ppt,pptx|max:10240',
         ]);
 
         $formateur = auth()->user();
         $module = Module::findOrFail($request->module_id);
 
-        // Vérifier que le module appartient bien au formateur
         if ($module->formateur_id != $formateur->id) {
             abort(403, 'Module non autorisé');
         }
@@ -57,8 +82,10 @@ class CoursController extends Controller
             'fichier' => $path,
         ]);
 
-        return redirect()->route('formateur.cours.index', ['module_id' => $module->id])
-                         ->with('success', 'Support ajouté avec succès.');
+        return redirect()->route('formateur.cours.index', [
+            'module_id' => $module->id,
+            'semestre' => $request->semestre,
+        ])->with('success', 'Support ajouté avec succès.');
     }
 
     public function destroy($id)
@@ -66,12 +93,10 @@ class CoursController extends Controller
         $support = SupportCours::findOrFail($id);
         $formateur = auth()->user();
 
-        // Vérifier que le support appartient au formateur
         if ($support->formateur_id != $formateur->id) {
             abort(403);
         }
 
-        // Supprimer le fichier physique
         Storage::disk('public')->delete($support->fichier);
         $support->delete();
 

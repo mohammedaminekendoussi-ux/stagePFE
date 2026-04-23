@@ -12,29 +12,81 @@ use App\Models\Note;
 
 class NotesController extends Controller
 {
+    private function getSemestresPossibles($annee)
+    {
+        switch ($annee) {
+            case 1: return [1, 2];
+            case 2: return [3, 4];
+            case 3: return [5, 6];
+            default: return [1, 2];
+        }
+    }
+
+    private function getSemestreParAnneeEtDate($annee)
+    {
+        $semestresPossibles = $this->getSemestresPossibles($annee);
+        $mois = now()->month;
+        $isImpair = ($mois >= 9 || $mois <= 2);
+        
+        if ($isImpair) {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 1) return $s;
+            }
+        } else {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 0) return $s;
+            }
+        }
+        return $semestresPossibles[0] ?? 1;
+    }
+
     public function index(Request $request)
     {
         $formateur = auth()->user();
-
-        // Filtrer les modules du formateur
-        $modules = Module::where('formateur_id', $formateur->id)->get();
-        $filieres = Filiere::all();
-        $groupes = collect();
-        $etudiants = collect();
-        $moduleId = $request->get('module_id');
+        $filiereId = $request->get('filiere_id');
         $groupeId = $request->get('groupe_id');
+        $moduleId = $request->get('module_id');
+
+        // Toutes les filières où le formateur a des modules
+        $allFilieres = Filiere::whereHas('modules', function($q) use ($formateur) {
+            $q->where('formateur_id', $formateur->id);
+        })->get();
+
+        // Groupes de la filière sélectionnée
+        $groupes = collect();
+        if ($filiereId) {
+            $groupes = Groupe::where('filiere_id', $filiereId)->get();
+        }
+
+        // Modules : filtre par filière, par semestre automatique et par séances existantes
+        $modules = collect();
+        if ($filiereId) {
+            $query = Module::where('formateur_id', $formateur->id)
+                ->where('filiere_id', $filiereId);
+            
+            if ($groupeId) {
+                $groupe = Groupe::find($groupeId);
+                if ($groupe) {
+                    $semestreActuel = $this->getSemestreParAnneeEtDate($groupe->annee);
+                    $query->where('semestre', $semestreActuel)
+                          ->whereHas('seances', function($q) use ($groupeId) {
+                              $q->where('groupe_id', $groupeId);
+                          });
+                }
+            }
+            $modules = $query->get();
+        }
+
+        $etudiants = collect();
         $notes = [];
 
         if ($moduleId && $groupeId) {
-            // Vérifier que le module appartient bien au formateur
             $module = Module::where('id', $moduleId)->where('formateur_id', $formateur->id)->first();
             if ($module) {
-                $groupes = Groupe::where('id', $groupeId)->get(); // ou tous les groupes de la filière
                 $etudiants = User::where('role', 'etudiant')
                     ->where('groupe_id', $groupeId)
                     ->orderBy('nom')
                     ->get();
-                // Récupérer les notes existantes pour ce module et ces étudiants
                 foreach ($etudiants as $etudiant) {
                     $note = Note::where('module_id', $moduleId)
                         ->where('etudiant_id', $etudiant->id)
@@ -44,12 +96,7 @@ class NotesController extends Controller
             }
         }
 
-        // Pour le select des groupes (dépendant de la filière)
-        if ($request->filled('filiere_id')) {
-            $groupes = Groupe::where('filiere_id', $request->filiere_id)->get();
-        }
-
-        return view('formateur.notes.index', compact('modules', 'filieres', 'groupes', 'etudiants', 'notes', 'moduleId', 'groupeId'));
+        return view('formateur.notes.index', compact('allFilieres', 'groupes', 'modules', 'etudiants', 'notes', 'filiereId', 'groupeId', 'moduleId'));
     }
 
     public function save(Request $request)
@@ -64,12 +111,10 @@ class NotesController extends Controller
 
         $formateur = auth()->user();
         $module = Module::findOrFail($request->module_id);
-        if ($module->formateur_id != $formateur->id) {
-            abort(403);
-        }
+        if ($module->formateur_id != $formateur->id) abort(403);
 
         foreach ($request->notes as $etudiantId => $noteData) {
-            $note = Note::updateOrCreate(
+            Note::updateOrCreate(
                 [
                     'module_id' => $module->id,
                     'etudiant_id' => $etudiantId,
@@ -77,15 +122,14 @@ class NotesController extends Controller
                 [
                     'controle_continu' => $noteData['controle_continu'] ?? null,
                     'examen_finale' => $noteData['examen_finale'] ?? null,
-                    // On ne change pas 'validee' ici, elle reste inchangée
                 ]
             );
         }
 
         return redirect()->route('formateur.notes.index', [
-            'module_id' => $module->id,
-            'groupe_id' => $request->groupe_id,
             'filiere_id' => $request->filiere_id,
+            'groupe_id' => $request->groupe_id,
+            'module_id' => $module->id,
         ])->with('success', 'Notes sauvegardées.');
     }
 
@@ -98,9 +142,7 @@ class NotesController extends Controller
 
         $formateur = auth()->user();
         $module = Module::findOrFail($request->module_id);
-        if ($module->formateur_id != $formateur->id) {
-            abort(403);
-        }
+        if ($module->formateur_id != $formateur->id) abort(403);
 
         $etudiants = User::where('role', 'etudiant')->where('groupe_id', $request->groupe_id)->get();
         foreach ($etudiants as $etudiant) {
@@ -112,9 +154,9 @@ class NotesController extends Controller
         }
 
         return redirect()->route('formateur.notes.index', [
-            'module_id' => $module->id,
-            'groupe_id' => $request->groupe_id,
             'filiere_id' => $request->filiere_id,
-        ])->with('success', 'Notes validées. Les étudiants peuvent maintenant les consulter.');
+            'groupe_id' => $request->groupe_id,
+            'module_id' => $module->id,
+        ])->with('success', 'Notes validées.');
     }
 }

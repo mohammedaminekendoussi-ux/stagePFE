@@ -18,12 +18,26 @@ class DashboardController extends Controller
 
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
+    private function getSemestreActuel($anneeGroupe)
+    {
+        // année du groupe : 1,2,3
+        // base du semestre : (année - 1)*2 + 1  => pour année 1 -> 1, année 2 -> 3, année 3 -> 5
+        $semestreBase = ($anneeGroupe - 1) * 2 + 1; // 1,3,5
+        // actuellement, nous sommes soit en semestre impair (base) soit pair (base+1)
+        $mois = now()->month;
+        // Septembre à Février -> semestre impair (S1, S3, S5)
+        if ($mois >= 9 || $mois <= 2) {
+            return $semestreBase; // impair
+        } else {
+            return $semestreBase + 1; // pair
+        }
+    }
+
     public function index()
     {
         $etudiant = Auth::user();
         $groupe = $etudiant->groupe;
 
-        // Informations personnelles
         $info = [
             'nom' => $etudiant->nom,
             'prenom' => $etudiant->prenom,
@@ -32,11 +46,18 @@ class DashboardController extends Controller
             'groupe' => $groupe ? $groupe->nom : 'Non affecté',
         ];
 
-        // Emploi du temps du groupe
         $emploi = [];
+        $semestreActuel = '';
         if ($groupe) {
+            $anneeGroupe = $groupe->annee; // 1,2,3
+            $semestreNumber = $this->getSemestreActuel($anneeGroupe);
+            $semestreActuel = "Semestre $semestreNumber";
+
             $seances = Seance::with(['module', 'formateur'])
                 ->where('groupe_id', $groupe->id)
+                ->whereHas('module', function ($q) use ($semestreNumber) {
+                    $q->where('semestre', $semestreNumber);
+                })
                 ->get();
 
             foreach (self::JOURS as $jour) {
@@ -52,6 +73,6 @@ class DashboardController extends Controller
             }
         }
 
-        return view('etudiant.dashboard', compact('info', 'emploi'));
+        return view('etudiant.dashboard', compact('info', 'emploi', 'semestreActuel'));
     }
 }

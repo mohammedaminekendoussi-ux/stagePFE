@@ -15,33 +15,33 @@
                     <label class="form-label fw-semibold">Filière</label>
                     <select name="filiere_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
-                        @foreach($filieres as $filiere)
-                            <option value="{{ $filiere->id }}" {{ request('filiere_id') == $filiere->id ? 'selected' : '' }}>{{ $filiere->nom }}</option>
+                        @foreach($allFilieres as $filiere)
+                            <option value="{{ $filiere->id }}" {{ $filiereId == $filiere->id ? 'selected' : '' }}>{{ $filiere->nom }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Groupe</label>
-                    <select name="groupe_id" class="form-select">
+                    <select name="groupe_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
                         @foreach($groupes as $groupe)
-                            <option value="{{ $groupe->id }}" {{ request('groupe_id') == $groupe->id ? 'selected' : '' }}>{{ $groupe->nom }}</option>
+                            <option value="{{ $groupe->id }}" {{ $groupeId == $groupe->id ? 'selected' : '' }}>{{ $groupe->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label fw-semibold">Module</label>
-                    <select name="module_id" class="form-select">
+                    <select name="module_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Choisir --</option>
                         @foreach($modules as $module)
-                            <option value="{{ $module->id }}" {{ request('module_id') == $module->id ? 'selected' : '' }}>{{ $module->nom }}</option>
+                            <option value="{{ $module->id }}" {{ $moduleId == $module->id ? 'selected' : '' }}>{{ $module->nom }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">Charger étudiants</button>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <a href="{{ route('formateur.notes.index') }}" class="btn btn-outline-secondary w-100">Reset</a>
                 </div>
             </div>
@@ -51,8 +51,8 @@
         <form method="POST" action="{{ route('formateur.notes.save') }}">
             @csrf
             <input type="hidden" name="module_id" value="{{ $moduleId }}">
-            <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
-            <input type="hidden" name="filiere_id" value="{{ request('filiere_id') }}">
+            <input type="hidden" name="groupe_id" value="{{ $groupeId }}">
+            <input type="hidden" name="filiere_id" value="{{ $filiereId }}">
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-light">
@@ -60,7 +60,7 @@
                             <th>Étudiant</th>
                             <th>Contrôle continu (0-20)</th>
                             <th>Examen final (0-20)</th>
-                            <th>Moyenne (coefficient: {{ $module->coefficient ?? '?' }})</th>
+                            <th>Moyenne</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,7 +98,7 @@
             </div>
         </form>
 
-        <!-- Modal de confirmation pour validation -->
+        <!-- Modal -->
         <div class="modal fade" id="modalValider" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -107,14 +107,14 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Attention : une fois les notes validées, elles deviendront consultables par les étudiants. Vous ne pourrez plus les modifier ? (Selon votre politique, vous pouvez autoriser les modifications après validation, mais le cahier des charges dit que validation rend visible.)</p>
                         <p>Voulez-vous vraiment valider toutes les notes pour ce module et ce groupe ?</p>
                     </div>
                     <div class="modal-footer">
                         <form method="POST" action="{{ route('formateur.notes.validate') }}">
                             @csrf
                             <input type="hidden" name="module_id" value="{{ $moduleId }}">
-                            <input type="hidden" name="groupe_id" value="{{ request('groupe_id') }}">
+                            <input type="hidden" name="groupe_id" value="{{ $groupeId }}">
+                            <input type="hidden" name="filiere_id" value="{{ $filiereId }}">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                             <button type="submit" class="btn btn-success">Oui, valider</button>
                         </form>
@@ -128,7 +128,6 @@
 
 @push('scripts')
 <script>
-    // Calcul automatique de la moyenne lors de la saisie
     document.querySelectorAll('.note-cc, .note-exam').forEach(input => {
         input.addEventListener('input', function() {
             const row = this.closest('tr');

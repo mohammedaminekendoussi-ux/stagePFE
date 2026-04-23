@@ -17,13 +17,36 @@ class PlanningController extends Controller
 
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
-    public function index()
+    private function getSemestreGroupeParDefaut()
+    {
+        $mois = now()->month;
+        // Septembre (9) à Février (2) -> impairs, Mars (3) à Août (8) -> pairs
+        if ($mois >= 9 || $mois < 2) {
+            return 'impair';
+        } else {
+            return 'pair';
+        }
+    }
+
+    public function index(Request $request)
     {
         $formateur = auth()->user();
+        $groupeSemestre = $request->get('groupe_semestre');
+        
+        if (!$groupeSemestre) {
+            $groupeSemestre = $this->getSemestreGroupeParDefaut();
+        }
 
-        // Récupérer toutes les séances du formateur
+        // Récupérer les séances du formateur en filtrant par parité du semestre
         $seances = Seance::with(['module', 'groupe'])
             ->where('formateur_id', $formateur->id)
+            ->whereHas('module', function ($q) use ($groupeSemestre) {
+                if ($groupeSemestre == 'impair') {
+                    $q->whereRaw('semestre % 2 = 1');
+                } else {
+                    $q->whereRaw('semestre % 2 = 0');
+                }
+            })
             ->get();
 
         // Construire le tableau emploi du temps
@@ -32,8 +55,6 @@ class PlanningController extends Controller
             foreach (self::CRENEAUX as $creneau) {
                 [$debut, $fin] = explode('-', $creneau);
                 $seance = $seances->first(function($s) use ($jour, $debut, $fin) {
-                    // Ici on suppose que la colonne 'jour' contient le nom du jour (ex: 'Lundi')
-                    // Si c'est une date, utilisez Carbon::parse($s->jour)->translatedFormat('l')
                     return $s->jour === $jour
                         && $s->h_debut === $debut . ':00'
                         && $s->h_fin === $fin . ':00';
@@ -42,6 +63,6 @@ class PlanningController extends Controller
             }
         }
 
-        return view('formateur.emploi', compact('emploi'));
+        return view('formateur.emploi', compact('emploi', 'groupeSemestre'));
     }
 }

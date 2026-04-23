@@ -5,8 +5,17 @@
 
 @section('content')
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-white py-3">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-bold"><i class="bi bi-clipboard-x text-danger"></i> Absences par module</h6>
+        @if(isset($semestresPossibles))
+        <form method="GET" action="{{ route('etudiant.absences') }}" class="d-inline">
+            <select name="semestre" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                @foreach($semestresPossibles as $s)
+                    <option value="{{ $s }}" {{ $semestreChoisi == $s ? 'selected' : '' }}>Semestre {{ $s }}</option>
+                @endforeach
+            </select>
+        </form>
+        @endif
     </div>
     <div class="card-body">
         @if(count($absencesData) > 0)
@@ -49,7 +58,7 @@
             @endforeach
         @else
             <div class="alert alert-warning">
-                Aucun module trouvé pour votre groupe. Veuillez contacter l'administrateur.
+                Aucun module trouvé pour le semestre sélectionné.
             </div>
         @endif
     </div>

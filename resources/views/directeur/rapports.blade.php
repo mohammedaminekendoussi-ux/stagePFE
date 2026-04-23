@@ -61,12 +61,13 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Date début</label>
-                    <input type="date" name="date_debut" class="form-control" value="{{ request('date_debut') }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Date fin</label>
-                    <input type="date" name="date_fin" class="form-control" value="{{ request('date_fin') }}">
+                    <label class="form-label fw-semibold">Semestre</label>
+                    <select name="semestre" class="form-select">
+                        <option value="">Tous</option>
+                        @for($i = 1; $i <= 6; $i++)
+                            <option value="{{ $i }}" {{ request('semestre') == $i ? 'selected' : '' }}>Semestre {{ $i }}</option>
+                        @endfor
+                    </select>
                 </div>
                 <div class="col-md-3 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-primary flex-fill">
@@ -96,49 +97,49 @@
     </div>
     <div class="card-body p-0">
         @if($rapportData->type == 'comparaison')
-    @if(is_array($rapportData->data) && isset($rapportData->data['filiere1']))
-        <div class="p-4">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Indicateur</th>
-                            <th>{{ $rapportData->data['filiere1'] }}</th>
-                            <th>{{ $rapportData->data['filiere2'] }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Effectif</strong></td>
-                            <td>{{ $rapportData->data['effectif1'] }}</td>
-                            <td>{{ $rapportData->data['effectif2'] }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Taux de présence</strong></td>
-                            <td>{{ $rapportData->data['taux_presence1'] }}%</td>
-                            <td>{{ $rapportData->data['taux_presence2'] }}%</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Total absences</strong></td>
-                            <td>{{ $rapportData->data['total_absences1'] }}</td>
-                            <td>{{ $rapportData->data['total_absences2'] }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Moyenne générale</strong></td>
-                            <td>{{ $rapportData->data['moyenne1'] }}/20</td>
-                            <td>{{ $rapportData->data['moyenne2'] }}/20</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Différence moyenne</strong></td>
-                            <td colspan="2" class="text-center">{{ $rapportData->data['difference_moyenne'] }} points</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @else
-        <div class="alert alert-warning m-3">{{ $rapportData->title ?? 'Données non disponibles' }}</div>
-    @endif
+            @if(is_array($rapportData->data) && isset($rapportData->data['filiere1']))
+                <div class="p-4">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Indicateur</th>
+                                    <th>{{ $rapportData->data['filiere1'] }}</th>
+                                    <th>{{ $rapportData->data['filiere2'] }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Effectif</strong></td>
+                                    <td>{{ $rapportData->data['effectif1'] }}</td>
+                                    <td>{{ $rapportData->data['effectif2'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Taux de présence</strong></td>
+                                    <td>{{ $rapportData->data['taux_presence1'] }}%</td>
+                                    <td>{{ $rapportData->data['taux_presence2'] }}%</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total absences</strong></td>
+                                    <td>{{ $rapportData->data['total_absences1'] }}</td>
+                                    <td>{{ $rapportData->data['total_absences2'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Moyenne générale</strong></td>
+                                    <td>{{ $rapportData->data['moyenne1'] }}/20</td>
+                                    <td>{{ $rapportData->data['moyenne2'] }}/20</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Différence moyenne</strong></td>
+                                    <td colspan="2" class="text-center">{{ $rapportData->data['difference_moyenne'] }} points</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-warning m-3">{{ $rapportData->title ?? 'Données non disponibles' }}</div>
+            @endif
         @else
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -149,7 +150,7 @@
                             @elseif($rapportData->type == 'notes')
                                 <th class="ps-3">Étudiant</th><th>Module</th><th>Contrôle continu</th><th>Examen final</th><th>Moyenne</th>
                             @elseif($rapportData->type == 'presence')
-    <th>Groupe</th><th>Nb étudiants</th><th>Séances théoriques</th><th>Absences réelles</th><th>Taux présence (%)</th>
+                                <th>Groupe</th><th>Nb étudiants</th><th>Séances théoriques</th><th>Absences réelles</th><th>Taux présence (%)</th>
                             @endif
                         </tr>
                     </thead>
@@ -169,15 +170,15 @@
                                 <td>{{ $item->examen_finale ?? '-' }}</td>
                                 <td>{{ round(($item->controle_continu + $item->examen_finale)/2, 2) }}</td>
                             @elseif($rapportData->type == 'presence')
-    <td>{{ is_array($item) ? $item['groupe'] : $item->groupe }}</td>
-    <td>{{ is_array($item) ? $item['nb_etudiants'] : $item->nb_etudiants }}</td>
-    <td>{{ is_array($item) ? $item['seances_theoriques'] : $item->seances_theoriques }}</td>
-    <td>{{ is_array($item) ? $item['absences_reelles'] : $item->absences_reelles }}</td>
-    <td>{{ is_array($item) ? $item['taux_presence'] : $item->taux_presence }}%</td>
+                                <td>{{ is_array($item) ? $item['groupe'] : $item->groupe }}</td>
+                                <td>{{ is_array($item) ? $item['nb_etudiants'] : $item->nb_etudiants }}</td>
+                                <td>{{ is_array($item) ? $item['seances_theoriques'] : $item->seances_theoriques }}</td>
+                                <td>{{ is_array($item) ? $item['absences_reelles'] : $item->absences_reelles }}</td>
+                                <td>{{ is_array($item) ? $item['taux_presence'] : $item->taux_presence }}%</td>
                             @endif
                         </tr>
                         @empty
-                            <tr><td colspan="5" class="text-center">Aucune donnée trouvée.</td></tr>
+                            <tr><td colspan="5" class="text-center">Aucune donnée trouvée. </td>
                         @endforelse
                     </tbody>
                 </table>
