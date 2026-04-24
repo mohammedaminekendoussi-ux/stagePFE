@@ -20,15 +20,32 @@ class EmploiDuTempsController extends Controller
 
     const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
-    // Détermine automatiquement le groupe de semestres (impair/pair) selon la date
-    private function getSemestreGroupeParDefaut()
+    private function getSemestresPossibles($annee)
     {
-        $mois = now()->month;
-        if ($mois >= 9 || $mois <= 2) {
-            return 'impair';
-        } else {
-            return 'pair';
+        switch ($annee) {
+            case 1: return [1, 2];
+            case 2: return [3, 4];
+            case 3: return [5, 6];
+            default: return [1, 2];
         }
+    }
+
+    private function getSemestreParAnneeEtDate($annee)
+    {
+        $semestresPossibles = $this->getSemestresPossibles($annee);
+        $mois = now()->month;
+        $isImpair = ($mois >= 9 || $mois <= 2);
+        
+        if ($isImpair) {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 1) return $s;
+            }
+        } else {
+            foreach ($semestresPossibles as $s) {
+                if ($s % 2 == 0) return $s;
+            }
+        }
+        return $semestresPossibles[0] ?? 1;
     }
 
     public function index(Request $request)
@@ -37,26 +54,15 @@ class EmploiDuTempsController extends Controller
         $groupes = collect();
         $emploi = [];
         $groupe = null;
-
-        $groupeSemestre = $this->getSemestreGroupeParDefaut();
-        $semestreChoisi = $request->get('semestre'); // 1,2,3,4,5,6 ou null
+        $semestre = null;
 
         if ($request->filled('groupe_id')) {
             $groupe = Groupe::with('filiere')->findOrFail($request->groupe_id);
+            $semestre = $this->getSemestreParAnneeEtDate($groupe->annee);
+            
             $query = Seance::with(['module', 'formateur'])->where('groupe_id', $groupe->id);
-
-            // Filtrer par semestre si choisi
-            if ($semestreChoisi) {
-                $query->whereHas('module', fn($q) => $q->where('semestre', $semestreChoisi));
-            } else {
-                // Par défaut, on filtre selon le groupe impairs/pairs
-                if ($groupeSemestre == 'impair') {
-                    $query->whereHas('module', fn($q) => $q->whereRaw('semestre % 2 = 1'));
-                } else {
-                    $query->whereHas('module', fn($q) => $q->whereRaw('semestre % 2 = 0'));
-                }
-            }
-
+            $query->whereHas('module', fn($q) => $q->where('semestre', $semestre));
+            
             $seances = $query->get();
 
             foreach (self::JOURS as $jour) {
@@ -76,8 +82,6 @@ class EmploiDuTempsController extends Controller
             $groupes = Groupe::where('filiere_id', $request->filiere_id)->get();
         }
 
-        return view('directeur.emploi', compact(
-            'filieres', 'groupes', 'emploi', 'groupe', 'groupeSemestre'
-        ));
+        return view('directeur.emploi', compact('filieres', 'groupes', 'emploi', 'groupe', 'semestre'));
     }
 }

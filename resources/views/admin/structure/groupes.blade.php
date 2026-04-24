@@ -36,10 +36,10 @@
                 </a>
             </div>
             <div class="col-md-4 text-end">
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddGroupe">
-        <i class="bi bi-plus-circle"></i> Ajouter un groupe
-    </button>
-</div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddGroupe">
+                    <i class="bi bi-plus-circle"></i> Ajouter un groupe
+                </button>
+            </div>
         </div>
     </form>
 </div>
@@ -117,7 +117,7 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Année <span class="text-danger">*</span></label>
                                         <select name="annee" class="form-select" required>
-                                            @for($i = 1; $i <= 5; $i++)
+                                            @for($i = 1; $i <= 3; $i++)
                                                 <option value="{{ $i }}" {{ $groupe->annee == $i ? 'selected' : '' }}>
                                                     Année {{ $i }}
                                                 </option>
@@ -182,7 +182,7 @@
                         <label class="form-label fw-semibold">Année <span class="text-danger">*</span></label>
                         <select name="annee" class="form-select" required>
                             <option value="">-- Choisir une année --</option>
-                            @for($i = 1; $i <= 5; $i++)
+                            @for($i = 1; $i <= 3; $i++)
                                 <option value="{{ $i }}">Année {{ $i }}</option>
                             @endfor
                         </select>
