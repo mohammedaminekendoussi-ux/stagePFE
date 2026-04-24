@@ -60,16 +60,16 @@ class NoteController extends Controller
         // Organiser les notes par semestre (uniquement ceux possibles)
         $notesParSemestre = [];
         $moyennesParSemestre = [];
-        $sommeNotesGenerale = 0;
-        $nbModulesGeneraux = 0;
+        $sommePondereeGenerale = 0;
+        $sommeCoefficientsGenerale = 0;
 
         foreach ($semestresPossibles as $semestre) {
             $modules = $tousModules->filter(fn($m) => $m->semestre == $semestre);
             if ($modules->isEmpty()) continue;
 
             $notesData = [];
-            $sommeNotesSemestre = 0;
-            $nbModulesSemestre = 0;
+            $sommePondereeSemestre = 0;
+            $sommeCoefficientsSemestre = 0;
 
             foreach ($modules as $module) {
                 $note = Note::where('module_id', $module->id)
@@ -82,10 +82,10 @@ class NoteController extends Controller
                 $moyenne = null;
                 if ($controle !== null && $examen !== null) {
                     $moyenne = round(($controle + $examen) / 2, 2);
-                    $sommeNotesSemestre += $moyenne;
-                    $nbModulesSemestre++;
-                    $sommeNotesGenerale += $moyenne;
-                    $nbModulesGeneraux++;
+                    $sommePondereeSemestre += $moyenne * $module->coefficient;
+                    $sommeCoefficientsSemestre += $module->coefficient;
+                    $sommePondereeGenerale += $moyenne * $module->coefficient;
+                    $sommeCoefficientsGenerale += $module->coefficient;
                 }
 
                 $notesData[] = (object) [
@@ -97,10 +97,10 @@ class NoteController extends Controller
             }
 
             $notesParSemestre[$semestre] = $notesData;
-            $moyennesParSemestre[$semestre] = $nbModulesSemestre > 0 ? round($sommeNotesSemestre / $nbModulesSemestre, 2) : 0;
+            $moyennesParSemestre[$semestre] = $sommeCoefficientsSemestre > 0 ? round($sommePondereeSemestre / $sommeCoefficientsSemestre, 2) : 0;
         }
 
-        $moyenneGenerale = $nbModulesGeneraux > 0 ? round($sommeNotesGenerale / $nbModulesGeneraux, 2) : 0;
+        $moyenneGenerale = $sommeCoefficientsGenerale > 0 ? round($sommePondereeGenerale / $sommeCoefficientsGenerale, 2) : 0;
 
         return view('etudiant.notes', compact('notesParSemestre', 'moyennesParSemestre', 'moyenneGenerale', 'semestresPossibles', 'semestreActif'));
     }
