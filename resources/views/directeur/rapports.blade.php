@@ -146,7 +146,7 @@
                     <thead class="table-light">
                         <tr class="text-uppercase small text-muted">
                             @if($rapportData->type == 'absences')
-                                <th class="ps-3">Étudiant</th><th>Module</th><th>Groupe</th><th>Date</th><th>Justifiée</th>
+                                <th class="ps-3">Étudiant</th><th>Module</th><th>Groupe</th><th>Date</th>
                             @elseif($rapportData->type == 'notes')
                                 <th class="ps-3">Étudiant</th><th>Module</th><th>Contrôle continu</th><th>Examen final</th><th>Moyenne</th>
                             @elseif($rapportData->type == 'presence')
@@ -162,7 +162,6 @@
                                 <td>{{ $item->seance->module->nom ?? '?' }}</td>
                                 <td>{{ $item->seance->groupe->nom ?? '?' }}</td>
                                 <td>{{ \Carbon\Carbon::parse($item->date)->format('d/m/Y') }}</td>
-                                <td>{{ $item->justifiee ? 'Oui' : 'Non' }}</td>
                             @elseif($rapportData->type == 'notes')
                                 <td>{{ $item->etudiant->prenom }} {{ $item->etudiant->nom }}</td>
                                 <td>{{ $item->module->nom }}</td>

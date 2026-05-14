@@ -44,9 +44,7 @@
                                 @foreach($data->absences as $absence)
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span><i class="bi bi-calendar-x"></i> {{ \Carbon\Carbon::parse($absence->date)->format('d/m/Y') }}</span>
-                                        <span class="badge bg-{{ $absence->justifiee ? 'success' : 'danger' }}">
-                                            {{ $absence->justifiee ? 'Justifiée' : 'Non justifiée' }}
-                                        </span>
+                                        
                                     </li>
                                 @endforeach
                             </ul>
