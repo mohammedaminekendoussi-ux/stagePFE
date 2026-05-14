@@ -222,6 +222,9 @@
 
 @section('scripts')
 <script>
+// Base URL dynamique (fonctionne avec ou sans sous-dossier)
+const baseUrl = "{{ url('/') }}";
+
 function getGroupeId() {
     let select = document.getElementById('groupe_id');
     return select ? select.value : '';
@@ -248,7 +251,7 @@ function chargerSalles(selectSalle, jour, creneau, excludeId = null, salleActuel
         console.log('Missing groupeId or semestre');
         return;
     }
-    let url = `/stagePFE/public/admin/emploi/salles?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}`;
+    let url = `${baseUrl}/admin/emploi/salles?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}`;
     if (excludeId) url += `&exclude_id=${excludeId}`;
 
     fetch(url)
@@ -288,7 +291,7 @@ document.querySelectorAll('.module-add-select').forEach(function(select) {
             return;
         }
 
-        fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}`)
+        fetch(`${baseUrl}/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}`)
             .then(r => r.json())
             .then(formateurs => {
                 formateurSelect.innerHTML = '<option value="">-- Choisir un formateur --</option>';
@@ -340,7 +343,7 @@ document.querySelectorAll('.module-select').forEach(function(select) {
         const semestre = getCurrentSemestre();
 
         if (moduleId && jour && creneau && groupeId && semestre) {
-            fetch(`/stagePFE/public/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}&exclude_id=${excludeId}`)
+            fetch(`${baseUrl}/admin/emploi/formateurs/${moduleId}?jour=${jour}&creneau=${creneau}&groupe_id=${groupeId}&semestre=${semestre}&exclude_id=${excludeId}`)
                 .then(r => r.json())
                 .then(formateurs => {
                     formateurSelect.innerHTML = '';
