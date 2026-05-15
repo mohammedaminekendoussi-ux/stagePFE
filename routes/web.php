@@ -82,6 +82,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         Route::get('/rapports/export-pdf', [RapportController::class, 'exportPdf'])->name('rapports.export');
         Route::get('/emploi-du-temps', [DirecteurEmploiController::class, 'index'])->name('emploi.index');
         Route::get('/dossiers', [DossierController::class, 'index'])->name('dossiers.index');
+        Route::get('/dossiers/formateur/{id}/absences', [DossierController::class, 'showFormateurAbsences'])->name('dossiers.formateur.absences');
     });
 
     // Formateur
