@@ -91,7 +91,13 @@
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
-                        <tr><th>#</th><th>Nom complet</th><th>Email</th><th>Statut</th></tr>
+                        <tr>
+                            <th>#</th>
+                            <th>Nom complet</th>
+                            <th>Email</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @forelse($formateurs as $formateur)
@@ -100,9 +106,14 @@
                             <td>{{ $formateur->prenom }} {{ $formateur->nom }}</td>
                             <td>{{ $formateur->email }}</td>
                             <td>{!! $formateur->actif ? '<span class="badge bg-success">Actif</span>' : '<span class="badge bg-danger">Désactivé</span>' !!}</td>
+                            <td>
+                                <a href="{{ route('directeur.dossiers.formateur.absences', $formateur->id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-calendar-check"></i> Séances
+                                </a>
+                            </td>
                         </tr>
                         @empty
-                        <tr><td colspan="4" class="text-center">Aucun formateur trouvé.</td></tr>
+                        <tr><td colspan="5" class="text-center">Aucun formateur trouvé.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

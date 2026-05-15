@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Filiere;
 use App\Models\Groupe;
+use App\Models\Seance;
+use App\Models\PresenceFormateur;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DossierController extends Controller
 {
@@ -35,7 +38,7 @@ class DossierController extends Controller
                 });
             }
             $etudiants = $query->orderBy('nom')->get();
-            $formateurs = collect(); // collection vide pour la vue
+            $formateurs = collect();
         } 
         // Récupération des formateurs
         else {
@@ -48,7 +51,7 @@ class DossierController extends Controller
                 });
             }
             $formateurs = $query->orderBy('nom')->get();
-            $etudiants = collect(); // collection vide
+            $etudiants = collect();
         }
 
         if ($filiereId) {
@@ -56,5 +59,30 @@ class DossierController extends Controller
         }
 
         return view('directeur.dossiers', compact('type', 'etudiants', 'formateurs', 'filieres', 'groupes', 'search', 'filiereId'));
+    }
+
+    public function showFormateurAbsences($id)
+    {
+        $formateur = User::findOrFail($id);
+        // Récupérer toutes les séances du formateur
+        $seances = Seance::with(['module', 'groupe'])
+            ->where('formateur_id', $formateur->id)
+            ->orderBy('jour', 'desc')
+            ->orderBy('h_debut', 'desc')
+            ->get();
+
+        // Pour chaque séance, récupérer les dates où le formateur a été présent
+        $seancesAvecDates = [];
+        foreach ($seances as $seance) {
+            $dates = PresenceFormateur::where('seance_id', $seance->id)
+                ->pluck('date')
+                ->map(fn($date) => Carbon::parse($date)->format('d/m/Y'));
+            $seancesAvecDates[] = [
+                'seance' => $seance,
+                'dates' => $dates,
+            ];
+        }
+
+        return view('directeur.formateur_absences', compact('formateur', 'seancesAvecDates'));
     }
 }

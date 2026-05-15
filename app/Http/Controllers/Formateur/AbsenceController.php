@@ -7,6 +7,7 @@ use App\Models\Seance;
 use App\Models\Absence;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\PresenceFormateur;
 
 class AbsenceController extends Controller
 {
@@ -97,8 +98,14 @@ class AbsenceController extends Controller
         $formateur = auth()->user();
         $seance = Seance::findOrFail($seanceId);
         $date = $request->input('date', now()->format('Y-m-d'));
-
+        
         if ($seance->formateur_id != $formateur->id) abort(403);
+
+        // Enregistrer la présence du formateur pour cette séance à cette date
+        PresenceFormateur::updateOrCreate(
+            ['seance_id' => $seance->id, 'date' => $date],
+            []
+        );
 
         $etudiantsDuGroupe = $seance->groupe->etudiants->pluck('id')->toArray();
         $presents = $request->input('etudiants_presents', []);
